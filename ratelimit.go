@@ -33,6 +33,7 @@ func (rl *rateLimiter) allow(ip string) bool {
 	now := time.Now()
 	e, ok := rl.ips[ip]
 	if !ok || now.After(e.reset) {
+		delete(rl.ips, ip)
 		rl.ips[ip] = &ipEntry{count: 1, reset: now.Add(rl.window)}
 		return true
 	}
