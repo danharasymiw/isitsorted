@@ -1,1 +1,36 @@
-<!DOCTYPE html><html><body>placeholder</body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Is It Sorted?</title>
+  <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 480px; margin: 60px auto; padding: 0 16px; }
+    h1 { font-size: 2rem; margin-bottom: 4px; }
+    .subtitle { color: #666; margin-top: 0; }
+    textarea { width: 100%; box-sizing: border-box; font-size: 1rem; padding: 8px; }
+    .controls { display: flex; align-items: center; gap: 16px; margin: 12px 0; }
+    button { padding: 10px 24px; font-size: 1rem; cursor: pointer; }
+    .result { font-size: 1.4rem; font-weight: bold; margin-top: 16px; }
+    .yes { color: #2a7d2a; }
+    .no  { color: #c0392b; }
+    .error { color: #c0392b; font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Is It Sorted?</h1>
+  <p class="subtitle">Paste integers below — one per line or comma-separated.</p>
+
+  <form hx-post="/check" hx-target="#result" hx-swap="innerHTML">
+    <textarea name="list" rows="8" placeholder="1&#10;2&#10;3&#10;4"></textarea>
+    <div class="controls">
+      <label><input type="radio" name="order" value="asc" checked> Ascending</label>
+      <label><input type="radio" name="order" value="desc"> Descending</label>
+      <button type="submit">Check</button>
+    </div>
+  </form>
+
+  <div id="result"></div>
+</body>
+</html>
