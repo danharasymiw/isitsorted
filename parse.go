@@ -101,10 +101,16 @@ func parseValue(s string) (*big.Rat, error) {
 
 	// Try English number words.
 	n, err := parseEnglish(s)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse %q as a number", s)
+	if err == nil {
+		return new(big.Rat).SetInt(n), nil
 	}
-	return new(big.Rat).SetInt(n), nil
+
+	// Try other languages.
+	if n, err := parseMultiLang(s); err == nil {
+		return new(big.Rat).SetInt(n), nil
+	}
+
+	return nil, fmt.Errorf("cannot parse %q as a number", s)
 }
 
 // parseConstant checks whether s is a math constant name, optionally
