@@ -81,6 +81,10 @@ func parseValue(s string) (*big.Rat, error) {
 		return v, nil
 	}
 
+	if v, ok := parseRoman(s); ok {
+		return v, nil
+	}
+
 	if v, err := parseExprString(s); err == nil {
 		return v, nil
 	}

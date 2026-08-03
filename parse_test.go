@@ -101,6 +101,14 @@ func TestParseValue(t *testing.T) {
 		{"emoji in expr", "2️⃣^1️⃣0️⃣", rat("1024"), false},
 		{"emoji mixed", "1️⃣0️⃣+5️⃣", rat("15"), false},
 
+		// Roman numerals
+		{"roman I", "I", rat("1"), false},
+		{"roman XIV", "XIV", rat("14"), false},
+		{"roman MCMXCIX", "MCMXCIX", rat("1999"), false},
+		{"roman lowercase", "xlii", rat("42"), false},
+		{"roman nulla", "nulla", rat("0"), false},
+		{"roman vinculum", "X̅", rat("10000"), false},
+
 		// Errors
 		{"empty", "", nil, true},
 		{"garbage", "banana", nil, true},
