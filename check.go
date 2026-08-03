@@ -1,13 +1,16 @@
 package main
 
-func check(list []int, order string) bool {
+import "math/big"
+
+func check(list []*big.Rat, order string) bool {
 	for i := 1; i < len(list); i++ {
+		cmp := list[i].Cmp(list[i-1])
 		if order == "desc" {
-			if list[i] > list[i-1] {
+			if cmp > 0 {
 				return false
 			}
 		} else {
-			if list[i] < list[i-1] {
+			if cmp < 0 {
 				return false
 			}
 		}

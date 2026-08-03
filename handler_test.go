@@ -79,10 +79,54 @@ func TestIsSortedHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("non-integer in list returns 400", func(t *testing.T) {
-		resp := post(`{"list":[1,"two",3],"order":"asc"}`)
+	t.Run("garbage string in list returns 400", func(t *testing.T) {
+		resp := post(`{"list":[1,"banana",3],"order":"asc"}`)
 		if resp.StatusCode != 400 {
 			t.Fatalf("want 400, got %d", resp.StatusCode)
+		}
+	})
+
+	// New: word numbers are valid
+	t.Run("word numbers accepted", func(t *testing.T) {
+		resp := post(`{"list":["one","two","three"],"order":"asc"}`)
+		if resp.StatusCode != 200 {
+			t.Fatalf("want 200, got %d", resp.StatusCode)
+		}
+		if !decodeBool(resp, "sorted") {
+			t.Error("want sorted=true")
+		}
+	})
+
+	// New: floats
+	t.Run("floats sorted", func(t *testing.T) {
+		resp := post(`{"list":[1.1, 2.2, 3.3],"order":"asc"}`)
+		if resp.StatusCode != 200 {
+			t.Fatalf("want 200, got %d", resp.StatusCode)
+		}
+		if !decodeBool(resp, "sorted") {
+			t.Error("want sorted=true")
+		}
+	})
+
+	// New: big integers
+	t.Run("big ints sorted", func(t *testing.T) {
+		resp := post(`{"list":[99999999999999999998, 99999999999999999999, 100000000000000000000],"order":"asc"}`)
+		if resp.StatusCode != 200 {
+			t.Fatalf("want 200, got %d", resp.StatusCode)
+		}
+		if !decodeBool(resp, "sorted") {
+			t.Error("want sorted=true")
+		}
+	})
+
+	// New: mixed types
+	t.Run("mixed types sorted", func(t *testing.T) {
+		resp := post(`{"list":["one", 2, 3.5, "four"],"order":"asc"}`)
+		if resp.StatusCode != 200 {
+			t.Fatalf("want 200, got %d", resp.StatusCode)
+		}
+		if !decodeBool(resp, "sorted") {
+			t.Error("want sorted=true")
 		}
 	})
 

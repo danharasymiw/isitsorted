@@ -60,6 +60,8 @@
         <ul>
           <li><span class="check">&#10003;</span> &nbsp;Ascending order</li>
           <li><span class="check">&#10003;</span> &nbsp;Descending order</li>
+          <li><span class="check">&#10003;</span> &nbsp;Integers, floats &amp; big numbers</li>
+          <li><span class="check">&#10003;</span> &nbsp;Numbers as words (forty-two)</li>
         </ul>
       </section>
 
@@ -68,13 +70,13 @@
         <p class="overline">Live demo</p>
         <h2>Try it yourself</h2>
         <p style="font-size: 13px; color: #64748b; margin: 0 0 14px">
-          Paste integers &mdash; one per line or comma-separated.
+          Paste numbers &mdash; one per line or comma-separated. Integers, floats, big numbers, and words all work.
         </p>
         <form hx-post="/check" hx-target="#result" hx-swap="innerHTML">
           <textarea
             name="list"
             rows="6"
-            placeholder="1&#10;2&#10;3&#10;4"
+            placeholder="one&#10;2&#10;3.14&#10;99999999999999999999"
           ></textarea>
           <div class="controls">
             <label class="radio-label">

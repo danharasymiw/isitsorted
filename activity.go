@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math/big"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -12,7 +12,7 @@ import (
 type activityEntry struct {
 	at     time.Time
 	sorted bool
-	list   []int
+	list   []*big.Rat
 }
 
 type activityLog struct {
@@ -25,14 +25,16 @@ func newActivityLog(max int) *activityLog {
 	return &activityLog{max: max}
 }
 
-func (a *activityLog) add(sorted bool, list []int) {
+func (a *activityLog) add(sorted bool, list []*big.Rat) {
 	if a.max == 0 {
 		return
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	cp := make([]int, len(list))
-	copy(cp, list)
+	cp := make([]*big.Rat, len(list))
+	for i, v := range list {
+		cp[i] = new(big.Rat).Set(v)
+	}
 	a.entries = append(a.entries, activityEntry{at: time.Now(), sorted: sorted, list: cp})
 	if len(a.entries) > a.max {
 		a.entries = a.entries[len(a.entries)-a.max:]
@@ -64,10 +66,10 @@ func timeAgo(t time.Time) string {
 	return fmt.Sprintf("%dh ago", int(d.Hours()))
 }
 
-func formatList(list []int) string {
+func formatList(list []*big.Rat) string {
 	parts := make([]string, len(list))
-	for i, n := range list {
-		parts[i] = strconv.Itoa(n)
+	for i, v := range list {
+		parts[i] = formatRat(v)
 	}
 	return "[" + strings.Join(parts, ", ") + "]"
 }

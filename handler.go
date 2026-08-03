@@ -2,20 +2,38 @@ package main
 
 import (
 	"encoding/json"
+	"math/big"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
 type sortRequest struct {
-	List  []int  `json:"list"`
-	Order string `json:"order"`
+	List  []json.RawMessage `json:"list"`
+	Order string            `json:"order"`
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(v)
+}
+
+// parseRaw converts a single JSON value (number or string) to *big.Rat.
+func parseRaw(raw json.RawMessage) (*big.Rat, error) {
+	s := strings.TrimSpace(string(raw))
+
+	// JSON string → unquote, then parse the inner text.
+	if len(s) >= 2 && s[0] == '"' {
+		var unquoted string
+		if err := json.Unmarshal(raw, &unquoted); err != nil {
+			return nil, err
+		}
+		return parseValue(unquoted)
+	}
+
+	// JSON number → parse the literal digits directly so we keep full
+	// precision for integers larger than int64.
+	return parseValue(s)
 }
 
 func isSortedHandler(ctr *counter) http.HandlerFunc {
@@ -38,7 +56,18 @@ func isSortedHandler(ctr *counter) http.HandlerFunc {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": `order must be "asc" or "desc"`})
 			return
 		}
-		sorted := check(req.List, req.Order)
+
+		list := make([]*big.Rat, 0, len(req.List))
+		for _, raw := range req.List {
+			v, err := parseRaw(raw)
+			if err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+				return
+			}
+			list = append(list, v)
+		}
+
+		sorted := check(list, req.Order)
 		ctr.increment(sorted)
 		writeJSON(w, http.StatusOK, map[string]bool{"sorted": sorted})
 	}
@@ -66,19 +95,19 @@ func checkFormHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 			return c == ',' || c == '\n' || c == '\r'
 		})
 
-		var list []int
+		var list []*big.Rat
 		for _, p := range parts {
 			p = strings.TrimSpace(p)
 			if p == "" {
 				continue
 			}
-			n, err := strconv.Atoi(p)
+			v, err := parseValue(p)
 			if err != nil {
 				w.Header().Set("Content-Type", "text/html")
-				w.Write([]byte(`<div class="result-card error"><span class="result-icon">!</span><div><strong>Invalid input</strong><p>All values must be integers.</p></div></div>`))
+				w.Write([]byte(`<div class="result-card error"><span class="result-icon">!</span><div><strong>Invalid input</strong><p>Could not parse &#34;` + htmlEscape(p) + `&#34; as a number.</p></div></div>`))
 				return
 			}
-			list = append(list, n)
+			list = append(list, v)
 		}
 
 		sorted := check(list, order)
@@ -95,4 +124,9 @@ func checkFormHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 			w.Write([]byte(`<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it&#39;s not sorted</strong></div></div>` + oobCount + oobSorted + oobNotSorted + oobActivity))
 		}
 	}
+}
+
+func htmlEscape(s string) string {
+	r := strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;", `"`, "&quot;")
+	return r.Replace(s)
 }
