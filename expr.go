@@ -99,7 +99,7 @@ func (p *exprParser) parseMulDiv() (*big.Rat, error) {
 	return left, nil
 }
 
-// parsePow = parseUnary ('^' parseUnary)?  right-associative
+// parsePow = parseUnary ('^' parsePow)?  right-associative
 func (p *exprParser) parsePow() (*big.Rat, error) {
 	base, err := p.parseUnary()
 	if err != nil {
@@ -110,7 +110,7 @@ func (p *exprParser) parsePow() (*big.Rat, error) {
 		return base, nil
 	}
 	p.pos++
-	exp, err := p.parseUnary()
+	exp, err := p.parsePow()
 	if err != nil {
 		return nil, err
 	}

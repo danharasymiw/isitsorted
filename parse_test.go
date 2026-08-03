@@ -82,6 +82,7 @@ func TestParseValue(t *testing.T) {
 		{"multiplication", "3*4", rat("12"), false},
 		{"division", "10/4", rat("5/2"), false},
 		{"power", "2^10", rat("1024"), false},
+		{"chained power right-assoc", "2^2^2", rat("16"), false},
 		{"parens", "(1+2)*3", rat("9"), false},
 		{"nested parens", "((2+3))", rat("5"), false},
 		{"expr with constant", "pi*2", rat("628318530717958647692/100000000000000000000"), false},
