@@ -38,8 +38,9 @@ func isSortedHandler(ctr *counter) http.HandlerFunc {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": `order must be "asc" or "desc"`})
 			return
 		}
-		ctr.increment()
-		writeJSON(w, http.StatusOK, map[string]bool{"sorted": check(req.List, req.Order)})
+		sorted := check(req.List, req.Order)
+		ctr.increment(sorted)
+		writeJSON(w, http.StatusOK, map[string]bool{"sorted": sorted})
 	}
 }
 
@@ -81,16 +82,17 @@ func checkFormHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 		}
 
 		sorted := check(list, order)
-		ctr.increment()
+		ctr.increment(sorted)
 		act.add(sorted, list)
-		n := ctr.value()
-		oobCount := `<div id="count-display" hx-swap-oob="innerHTML">` + formatCount(n) + `</div>`
+		oobCount := `<div id="count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.value()) + `</div>`
+		oobSorted := `<div id="sorted-count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.sortedValue()) + `</div>`
+		oobNotSorted := `<div id="not-sorted-count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.notSortedValue()) + `</div>`
 		oobActivity := `<div id="activity-feed" hx-swap-oob="innerHTML">` + renderActivity(act.recent()) + `</div>`
 		w.Header().Set("Content-Type", "text/html")
 		if sorted {
-			w.Write([]byte(`<div class="result-card yes"><span class="result-icon">✓</span><div><strong>Yes, it&#39;s sorted</strong></div></div>` + oobCount + oobActivity))
+			w.Write([]byte(`<div class="result-card yes"><span class="result-icon">✓</span><div><strong>Yes, it&#39;s sorted</strong></div></div>` + oobCount + oobSorted + oobNotSorted + oobActivity))
 		} else {
-			w.Write([]byte(`<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it&#39;s not sorted</strong></div></div>` + oobCount + oobActivity))
+			w.Write([]byte(`<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it&#39;s not sorted</strong></div></div>` + oobCount + oobSorted + oobNotSorted + oobActivity))
 		}
 	}
 }

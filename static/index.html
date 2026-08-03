@@ -41,12 +41,16 @@
           <div class="stat-label">Lists checked</div>
         </div>
         <div class="stat">
-          <div class="stat-value">1</div>
-          <div class="stat-label">Developer trusts us</div>
+          <div id="sorted-count-display" class="stat-value live" hx-get="/count/sorted" hx-trigger="load">
+            &mdash;
+          </div>
+          <div class="stat-label">Sorted</div>
         </div>
         <div class="stat">
-          <div class="stat-value">0</div>
-          <div class="stat-label">Data breaches</div>
+          <div id="not-sorted-count-display" class="stat-value live" hx-get="/count/not-sorted" hx-trigger="load">
+            &mdash;
+          </div>
+          <div class="stat-label">Not sorted</div>
         </div>
       </section>
 

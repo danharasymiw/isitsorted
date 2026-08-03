@@ -19,6 +19,8 @@ func newServer(rl *rateLimiter, ctr *counter) http.Handler {
 	mux.Handle("POST /is-sorted", rl.middleware(isSortedHandler(ctr)))
 	mux.Handle("POST /check", rl.middleware(checkFormHandler(ctr, act)))
 	mux.Handle("GET /count", countHandler(ctr))
+	mux.Handle("GET /count/sorted", sortedCountHandler(ctr))
+	mux.Handle("GET /count/not-sorted", notSortedCountHandler(ctr))
 	mux.Handle("GET /activity", activityHandler(act))
 	sub, _ := fs.Sub(staticFS, "static")
 	mux.Handle("GET /", http.FileServer(http.FS(sub)))

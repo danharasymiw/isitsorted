@@ -329,13 +329,13 @@ code {
   right: 24px;
   top: 50%;
   transform: translateY(-50%);
-  width: 148px;
+  width: 260px;
   background: #fff;
   border: 1.5px solid #e2e8f0;
   border-radius: 10px;
   padding: 12px;
 }
-@media (min-width: 1080px) {
+@media (min-width: 1280px) {
   .activity-sidebar { display: block; }
 }
 .activity-title {

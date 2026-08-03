@@ -11,13 +11,17 @@ import (
 )
 
 type counter struct {
-	mu   sync.Mutex
-	n    int64
-	path string
+	mu        sync.Mutex
+	n         int64
+	sortedN   int64
+	notSortedN int64
+	path      string
 }
 
 type counterFile struct {
-	Count int64 `json:"count"`
+	Count     int64 `json:"count"`
+	Sorted    int64 `json:"sorted"`
+	NotSorted int64 `json:"not_sorted"`
 }
 
 func newCounter(path string) *counter {
@@ -35,13 +39,20 @@ func newCounter(path string) *counter {
 		return c
 	}
 	c.n = f.Count
+	c.sortedN = f.Sorted
+	c.notSortedN = f.NotSorted
 	return c
 }
 
-func (c *counter) increment() {
+func (c *counter) increment(sorted bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.n++
+	if sorted {
+		c.sortedN++
+	} else {
+		c.notSortedN++
+	}
 	c.save()
 }
 
@@ -49,6 +60,18 @@ func (c *counter) value() int64 {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.n
+}
+
+func (c *counter) sortedValue() int64 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.sortedN
+}
+
+func (c *counter) notSortedValue() int64 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.notSortedN
 }
 
 func (c *counter) save() {
@@ -59,7 +82,7 @@ func (c *counter) save() {
 		log.Printf("counter: mkdir: %v", err)
 		return
 	}
-	data, _ := json.Marshal(counterFile{Count: c.n})
+	data, _ := json.Marshal(counterFile{Count: c.n, Sorted: c.sortedN, NotSorted: c.notSortedN})
 	tmp := c.path + ".tmp"
 	if err := os.WriteFile(tmp, data, 0644); err != nil {
 		log.Printf("counter: write: %v", err)
@@ -74,6 +97,20 @@ func countHandler(ctr *counter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		fmt.Fprint(w, formatCount(ctr.value()))
+	}
+}
+
+func sortedCountHandler(ctr *counter) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		fmt.Fprint(w, formatCount(ctr.sortedValue()))
+	}
+}
+
+func notSortedCountHandler(ctr *counter) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		fmt.Fprint(w, formatCount(ctr.notSortedValue()))
 	}
 }
 

@@ -15,8 +15,8 @@ func TestNewCounter_StartsAtZero(t *testing.T) {
 
 func TestCounter_Increment(t *testing.T) {
 	c := newCounter(filepath.Join(t.TempDir(), "count.json"))
-	c.increment()
-	c.increment()
+	c.increment(true)
+	c.increment(true)
 	if c.value() != 2 {
 		t.Fatalf("want 2, got %d", c.value())
 	}
@@ -25,9 +25,9 @@ func TestCounter_Increment(t *testing.T) {
 func TestCounter_PersistsAcrossRestarts(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "count.json")
 	c1 := newCounter(path)
-	c1.increment()
-	c1.increment()
-	c1.increment()
+	c1.increment(true)
+	c1.increment(true)
+	c1.increment(true)
 
 	c2 := newCounter(path)
 	if c2.value() != 3 {
@@ -37,8 +37,8 @@ func TestCounter_PersistsAcrossRestarts(t *testing.T) {
 
 func TestCountHandler(t *testing.T) {
 	c := newCounter(filepath.Join(t.TempDir(), "count.json"))
-	c.increment()
-	c.increment()
+	c.increment(true)
+	c.increment(true)
 
 	req := httptest.NewRequest("GET", "/count", nil)
 	w := httptest.NewRecorder()
