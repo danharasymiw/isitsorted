@@ -50,7 +50,7 @@ func (p *exprParser) parseAddSub() (*big.Rat, error) {
 	}
 	for {
 		ch, ok := p.peek()
-		if !ok || (ch != '+' && ch != '-') {
+		if !ok || (ch != '+' && ch != '-' && ch != '±') {
 			break
 		}
 		p.pos++
@@ -58,13 +58,14 @@ func (p *exprParser) parseAddSub() (*big.Rat, error) {
 		if err != nil {
 			return nil, err
 		}
-		res := new(big.Rat)
-		if ch == '+' {
-			res.Add(left, right)
-		} else {
-			res.Sub(left, right)
+		switch ch {
+		case '+':
+			left = new(big.Rat).Add(left, right)
+		case '-':
+			left = new(big.Rat).Sub(left, right)
+		case '±':
+			// ± denotes uncertainty — keep the nominal (left) value.
 		}
-		left = res
 	}
 	return left, nil
 }

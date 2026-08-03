@@ -87,6 +87,8 @@ func TestParseValue(t *testing.T) {
 		{"nested parens", "((2+3))", rat("5"), false},
 		{"expr with constant", "pi*2", rat("628318530717958647692/100000000000000000000"), false},
 		{"unary plus", "+5", rat("5"), false},
+		{"plus-minus nominal", "1±2", rat("1"), false},
+		{"plus-minus in expr", "3+1±0.5", rat("4"), false},
 		{"division by zero", "1/0", nil, true},
 		{"non-integer exponent", "2^1.5", nil, true},
 
