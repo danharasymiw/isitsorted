@@ -92,6 +92,32 @@ func frenchQuatreVingtQuirk(ones map[string]int64) func([]string) (*big.Int, boo
 }
 
 func init() {
+	languages = append(languages, langDef{
+		name: "english",
+		ones: map[string]int64{
+			"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4,
+			"five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9,
+			"ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13,
+			"fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17,
+			"eighteen": 18, "nineteen": 19,
+		},
+		tens: map[string]int64{
+			"twenty": 20, "thirty": 30, "forty": 40, "fifty": 50,
+			"sixty": 60, "seventy": 70, "eighty": 80, "ninety": 90,
+		},
+		scales: map[string]*big.Int{
+			"hundred":     big.NewInt(100),
+			"thousand":    big.NewInt(1_000),
+			"million":     big.NewInt(1_000_000),
+			"billion":     big.NewInt(1_000_000_000),
+			"trillion":    new(big.Int).SetUint64(1_000_000_000_000),
+			"quadrillion": new(big.Int).SetUint64(1_000_000_000_000_000),
+			"quintillion": new(big.Int).SetUint64(1_000_000_000_000_000_000),
+		},
+		negative: []string{"negative", "minus"},
+		skip:     []string{"and"},
+	})
+
 	germanOnes := map[string]int64{
 		// "eine" is the feminine form of "ein", required before
 		// feminine scale nouns like "Million"/"Milliarde" (e.g.

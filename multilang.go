@@ -27,6 +27,19 @@ type langDef struct {
 // languages_other.go.
 var languages []langDef
 
+func tokenize(s string) []string {
+	var tokens []string
+	for _, part := range strings.Fields(s) {
+		for _, sub := range strings.Split(part, "-") {
+			sub = strings.TrimSpace(sub)
+			if sub != "" {
+				tokens = append(tokens, sub)
+			}
+		}
+	}
+	return tokens
+}
+
 // cjkRuneInRange reports whether r falls in a CJK or Hangul script range,
 // which signals that the input should be tokenized character-by-character
 // rather than split on whitespace/hyphens.
