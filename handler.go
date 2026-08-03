@@ -96,6 +96,7 @@ func checkFormHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 		})
 
 		var list []*big.Rat
+		var rawList []string
 		for _, p := range parts {
 			p = strings.TrimSpace(p)
 			if p == "" {
@@ -108,11 +109,12 @@ func checkFormHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 				return
 			}
 			list = append(list, v)
+			rawList = append(rawList, p)
 		}
 
 		sorted := check(list, order)
 		ctr.increment(sorted)
-		act.add(sorted, list)
+		act.add(sorted, rawList)
 		oobCount := `<div id="count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.value()) + `</div>`
 		oobSorted := `<div id="sorted-count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.sortedValue()) + `</div>`
 		oobNotSorted := `<div id="not-sorted-count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.notSortedValue()) + `</div>`

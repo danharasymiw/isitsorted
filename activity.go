@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/big"
 	"net/http"
 	"strings"
 	"sync"
@@ -12,7 +11,7 @@ import (
 type activityEntry struct {
 	at     time.Time
 	sorted bool
-	list   []*big.Rat
+	list   []string
 }
 
 type activityLog struct {
@@ -25,16 +24,14 @@ func newActivityLog(max int) *activityLog {
 	return &activityLog{max: max}
 }
 
-func (a *activityLog) add(sorted bool, list []*big.Rat) {
+func (a *activityLog) add(sorted bool, list []string) {
 	if a.max == 0 {
 		return
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	cp := make([]*big.Rat, len(list))
-	for i, v := range list {
-		cp[i] = new(big.Rat).Set(v)
-	}
+	cp := make([]string, len(list))
+	copy(cp, list)
 	a.entries = append(a.entries, activityEntry{at: time.Now(), sorted: sorted, list: cp})
 	if len(a.entries) > a.max {
 		a.entries = a.entries[len(a.entries)-a.max:]
@@ -66,12 +63,8 @@ func timeAgo(t time.Time) string {
 	return fmt.Sprintf("%dh ago", int(d.Hours()))
 }
 
-func formatList(list []*big.Rat) string {
-	parts := make([]string, len(list))
-	for i, v := range list {
-		parts[i] = formatRat(v)
-	}
-	return "[" + strings.Join(parts, ", ") + "]"
+func formatList(list []string) string {
+	return "[" + strings.Join(list, ", ") + "]"
 }
 
 func renderActivity(entries []activityEntry) string {
