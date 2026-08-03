@@ -1,81 +1,135 @@
-# UI Redesign & API Docs — Design Spec
+# UI Redesign & Parody Landing Page — Design Spec
 
 **Date:** 2026-08-03  
-**Status:** Approved
+**Status:** Approved  
+**Domain:** isitsorted.ca
 
 ## Overview
 
-Redesign `static/index.html` with a clean, modern aesthetic and add an inline API reference section below the form. No external CSS frameworks or fonts — pure inline styles in the HTML file.
+Redesign `static/index.html` as a parody SaaS landing page. Looks like a polished, professional product site; the humor is entirely in the copy. No external CSS frameworks or fonts — pure inline styles.
 
 ## Visual Design
 
 **Aesthetic:** Clean & Modern  
-**Audience:** General public — approachable, trustworthy  
 **Color palette:**
-- Page background: `#f1f5f9` (slate-100) — softer than white
+- Page background: `#f1f5f9` (slate-100)
 - Surface/card: `#ffffff`
 - Primary text: `#0f172a` (slate-900)
 - Secondary text: `#64748b` (slate-500)
-- Muted text: `#94a3b8` (slate-400)
+- Muted/label text: `#94a3b8` (slate-400)
 - Border: `#e2e8f0` (slate-200)
-- Accent (button, radio active): `#4f46e5` (indigo-600)
-- Result yes: green (`#15803d` text on `#f0fdf4` bg, `#bbf7d0` border)
-- Result no: red (`#dc2626` text on `#fef2f2` bg, `#fecaca` border)
+- Accent: `#4f46e5` (indigo-600)
+- Result yes: `#15803d` text, `#f0fdf4` bg, `#bbf7d0` border
+- Result no: `#dc2626` text, `#fef2f2` bg, `#fecaca` border
 
 **Typography:** System font stack (`-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`). Code blocks use monospace.
 
-**Layout:** Single column, max-width 520px, centered. Page padding `60px auto`.
+**Layout:** Single column, max-width 520px, centered, `60px auto` padding.
 
-## Form Section
+---
 
-Replaces the current plain form with:
+## Page Sections (top to bottom)
 
-- Overline label: `IS IT SORTED?` in small uppercase slate-400
-- Heading: `Check your list` — 26px, weight 800, tight letter-spacing
-- Subtitle: existing copy, slate-500
-- Textarea: white background, `#e2e8f0` border, 10px border-radius, subtle box-shadow, `box-sizing: border-box`, full width
-- Radios + button row: flex, space-between. Indigo filled circle for selected radio state.
-- Button: indigo background, white text, 8px radius, slight box-shadow, `Check →` label
+### 1. Hero
 
-**Result states** (rendered into `#result` by HTMX, replacing `.yes`/`.no` paragraph classes):
+```
+isitsorted.ca                     ← indigo overline, uppercase, tight tracking
+Is It Sorted                      ← h1, 40px, weight 900, -2px letter-spacing
+Is It Sorted as a Service. (IISaaS)  ← tagline, 13px, weight 600, slate-600
+An API that tells you if a list of integers is sorted.  ← description, slate-500
+It does not sort the list.         ← italic, slate-400
+[Try it free →]  [View API docs]   ← indigo primary + white secondary buttons
+```
 
-- Sorted: green card (`#f0fdf4` bg, `#bbf7d0` border), ✓ icon, "Yes, it's sorted" in `#15803d`
-- Not sorted: red card (`#fef2f2` bg, `#fecaca` border), ✗ icon, "No, it's not sorted" in `#dc2626`
-- Error: red card, error message text
+### 2. Stats Bar
 
-The server-side `checkFormHandler` currently returns bare `<p class="result yes">` / `<p class="result no">` HTML fragments. These must be updated to return card HTML:
+Four columns, white background, separated by a bottom border:
 
-- **Sorted:** `<div class="result-card yes"><span class="result-icon">✓</span><div><strong>Yes, it's sorted</strong></div></div>`
-- **Not sorted:** `<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it's not sorted</strong></div></div>`
-- **Error:** `<div class="result-card error"><span class="result-icon">!</span><div><strong>Invalid input</strong><p>{message}</p></div></div>`
+| Stat | Label |
+|------|-------|
+| Mostly | Uptime |
+| < 2ms | p99 latency |
+| 1 | Developer trusts us |
+| 0 | Data breaches |
 
-Corresponding CSS classes (`result-card`, `yes`, `no`, `error`, `result-icon`) are defined in `index.html`.
+### 3. Features
 
-## API Docs Section
+Centered section, white background. Section label: "Features" (overline style).  
+Checkmarks are green (`#16a34a`), list is `display:inline-block; text-align:left` centered within the section:
 
-Separated from the form by a full-width `#e2e8f0` horizontal rule, scrolls below.
+- ✓ Detects ascending order
+- ✓ Detects descending order
+- ✓ Returns true or false
+- ✓ Handles empty lists
 
-**Contents:**
+### 4. Live Demo (Form)
 
-1. **Overline + heading:** `JSON API` overline, `POST /is-sorted` as h2
-2. **Description:** one sentence description + rate limit note (20 req/min per IP)
-3. **Request block:** dark code block (`#0f172a` bg) showing method, Content-Type header, and example JSON body with syntax highlighting via inline `<span>` colors
-4. **Response — sorted:** `200 OK` + `{"sorted": true}`
-5. **Response — error:** `400 Bad Request` + `{"error": "..."}`
-6. **curl example:** dark code block with a working curl snippet
+Section label: "Live demo" (overline). Heading: "Try it yourself".
 
-Code blocks use monospace font, `#0f172a` background, 8px border-radius.
+- Textarea: white, slate border, 10px radius, subtle shadow
+- Radios: indigo filled circle for selected state
+- Button: `Check →`, indigo, 8px radius
+
+**Result states** (HTMX swap into `#result`):
+
+- Sorted: `<div class="result-card yes"><span class="result-icon">✓</span><div><strong>Yes, it's sorted</strong></div></div>`
+- Not sorted: `<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it's not sorted</strong></div></div>`
+- Error: `<div class="result-card error"><span class="result-icon">!</span><div><strong>Invalid input</strong><p>{message}</p></div></div>`
+
+CSS classes `result-card`, `yes`, `no`, `error`, `result-icon` defined in `index.html`.
+
+### 5. Testimonials
+
+Section label: "What our users say". Three cards, white, slate border, 10px radius.
+
+1. > "JavaScript's `.sort()` compares everything as strings by default. `[10, 1, 2].sort()` returns `[1, 10, 2]`. I know this. I still double check now."  
+   **@sk_dev** · 4 stars
+
+2. > "not sure why this exists but it works"  
+   **anonymous** · 5 stars
+
+3. > "correctly identified my unsorted list. not happy about it."  
+   **@priya_dev** · 3 stars
+
+### 6. FAQ
+
+Section label: "Frequently asked questions". Q&A pairs, no borders — just question (bold, slate-900) and answer (slate-500) stacked.
+
+| Question | Answer |
+|----------|--------|
+| Does it sort the list? | No. |
+| Why would I use this? | You've got a list. You want to know if it's sorted. You're already here. |
+| Is there a paid plan? | No. 20 requests/minute, free, forever. |
+| What's the SLA? | It's running on a $6/mo VPS. You can work it out. |
+
+### 7. API Docs
+
+Section labels: "JSON API" overline, `POST /is-sorted` as h2.  
+Description: "Rate limited to 20 requests/minute per IP."
+
+Two dark code blocks (`#0f172a` bg, monospace, 8px radius):
+
+1. Request — method + Content-Type header + example JSON body
+2. curl example — `curl -X POST https://isitsorted.ca/is-sorted ...`
+
+### 8. Footer
+
+Two-column flex, full width:
+- Left: `© 2026 isitsorted.ca — All rights reserved. Patent pending.`
+- Right: `Built on a $6/mo VPS.`
+
+---
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `static/index.html` | Full rewrite — new styles + API docs section |
+| `static/index.html` | Full rewrite — new styles, all landing page sections |
 | `handler.go` | Update `checkFormHandler` HTML fragments to match new result card markup |
 
 ## Out of Scope
 
 - No JavaScript beyond the existing htmx CDN script
 - No dark mode toggle
-- No copy-to-clipboard buttons on code blocks
+- No copy-to-clipboard on code blocks
 - No separate `/docs` route
