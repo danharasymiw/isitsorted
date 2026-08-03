@@ -81,11 +81,13 @@ func checkFormHandler(ctr *counter) http.HandlerFunc {
 		}
 
 		ctr.increment()
+		n := ctr.value()
+		oob := `<div id="count-display" hx-swap-oob="innerHTML">` + formatCount(n) + `</div>`
 		w.Header().Set("Content-Type", "text/html")
 		if check(list, order) {
-			w.Write([]byte(`<div class="result-card yes"><span class="result-icon">✓</span><div><strong>Yes, it&#39;s sorted</strong></div></div>`))
+			w.Write([]byte(`<div class="result-card yes"><span class="result-icon">✓</span><div><strong>Yes, it&#39;s sorted</strong></div></div>` + oob))
 		} else {
-			w.Write([]byte(`<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it&#39;s not sorted</strong></div></div>`))
+			w.Write([]byte(`<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it&#39;s not sorted</strong></div></div>` + oob))
 		}
 	}
 }

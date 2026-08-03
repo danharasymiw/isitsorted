@@ -33,7 +33,7 @@ func main() {
 		dataDir = "data"
 	}
 	ctr := newCounter(filepath.Join(dataDir, "count.json"))
-	rl := newRateLimiter(20, time.Minute)
+	rl := newRateLimiter(100, time.Minute)
 	log.Printf("listening on :%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, newServer(rl, ctr)))
 }
