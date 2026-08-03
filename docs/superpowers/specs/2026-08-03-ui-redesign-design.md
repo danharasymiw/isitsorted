@@ -43,14 +43,15 @@ It does not sort the list.         ← italic, slate-400
 
 ### 2. Stats Bar
 
-Four columns, white background, separated by a bottom border:
+Five columns, white background, separated by a bottom border. Four are joke stats; one is the real live check count (displayed in indigo `#4f46e5` to subtly distinguish it):
 
-| Stat | Label |
-|------|-------|
-| Mostly | Uptime |
-| < 2ms | p99 latency |
-| 1 | Developer trusts us |
-| 0 | Data breaches |
+| Stat | Label | Notes |
+|------|-------|-------|
+| Mostly | Uptime | joke |
+| < 2ms | p99 latency | joke |
+| {count} | Lists checked | **real** — loaded via `hx-get="/count" hx-trigger="load"`, indigo color |
+| 1 | Developer trusts us | joke |
+| 0 | Data breaches | joke |
 
 ### 3. Features
 
@@ -120,12 +121,33 @@ Two-column flex, full width:
 
 ---
 
+## Counter Feature
+
+A persistent check counter increments on every successful request to `/check` or `/is-sorted`.
+
+**Backend (`counter.go` — new file):**
+- Atomic `int64` counter in memory, backed by `data/count.json` on disk
+- Load count from file at startup; write back after every increment
+- File format: `{"count": 42}`
+- New handler: `GET /count` returns an HTML fragment — just the formatted number (e.g. `3,847`) — for HTMX to swap in
+- Counter increments in `checkFormHandler` and `isSortedHandler` on success
+
+**Frontend (`index.html`):**
+- Stats bar placeholder: `<span hx-get="/count" hx-trigger="load">—</span>`
+- No polling — count is fetched once on page load
+
+**Data directory:** `data/` — add to `.gitignore`.
+
+---
+
 ## Files Changed
 
 | File | Change |
 |------|--------|
 | `static/index.html` | Full rewrite — new styles, all landing page sections |
-| `handler.go` | Update `checkFormHandler` HTML fragments to match new result card markup |
+| `handler.go` | Update result card HTML fragments; call counter increment |
+| `counter.go` | New — file-backed atomic counter + `GET /count` handler |
+| `main.go` | Register `GET /count` route; load counter at startup |
 
 ## Out of Scope
 
