@@ -55,6 +55,18 @@ func TestParseRoman(t *testing.T) {
 		{"garbage", "banana", 0, false},
 		{"mixed garbage", "XIbanana", 0, false},
 		{"just spaces", "   ", 0, false},
+
+		// Vinculum (combining overline U+0305)
+		{"V̅ = 5000", "V̅", 5000, true},
+		{"X̅ = 10000", "X̅", 10000, true},
+		{"L̅ = 50000", "L̅", 50000, true},
+		{"C̅ = 100000", "C̅", 100000, true},
+		{"D̅ = 500000", "D̅", 500000, true},
+		{"M̅ = 1000000", "M̅", 1000000, true},
+
+		// Mixed vinculum + standard
+		{"X̅MCMXCIX = 11999", "X̅MCMXCIX", 11999, true},
+		{"X̅IV = 10004", "X̅IV", 10004, true},
 	}
 
 	for _, tc := range tests {
