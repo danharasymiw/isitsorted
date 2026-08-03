@@ -191,5 +191,13 @@
         >
       </section>
     </div>
+
+    <!-- Activity feed sidebar -->
+    <div class="activity-sidebar">
+      <p class="activity-title">Recent checks</p>
+      <div id="activity-feed" hx-get="/activity" hx-trigger="load, every 5s [document.visibilityState=='visible']" hx-swap="innerHTML">
+        <p class="activity-empty">No checks yet</p>
+      </div>
+    </div>
   </body>
 </html>

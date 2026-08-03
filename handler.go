@@ -43,7 +43,7 @@ func isSortedHandler(ctr *counter) http.HandlerFunc {
 	}
 }
 
-func checkFormHandler(ctr *counter) http.HandlerFunc {
+func checkFormHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		if err := r.ParseForm(); err != nil {
@@ -80,14 +80,17 @@ func checkFormHandler(ctr *counter) http.HandlerFunc {
 			list = append(list, n)
 		}
 
+		sorted := check(list, order)
 		ctr.increment()
+		act.add(sorted, list)
 		n := ctr.value()
-		oob := `<div id="count-display" hx-swap-oob="innerHTML">` + formatCount(n) + `</div>`
+		oobCount := `<div id="count-display" hx-swap-oob="innerHTML">` + formatCount(n) + `</div>`
+		oobActivity := `<div id="activity-feed" hx-swap-oob="innerHTML">` + renderActivity(act.recent()) + `</div>`
 		w.Header().Set("Content-Type", "text/html")
-		if check(list, order) {
-			w.Write([]byte(`<div class="result-card yes"><span class="result-icon">✓</span><div><strong>Yes, it&#39;s sorted</strong></div></div>` + oob))
+		if sorted {
+			w.Write([]byte(`<div class="result-card yes"><span class="result-icon">✓</span><div><strong>Yes, it&#39;s sorted</strong></div></div>` + oobCount + oobActivity))
 		} else {
-			w.Write([]byte(`<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it&#39;s not sorted</strong></div></div>` + oob))
+			w.Write([]byte(`<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it&#39;s not sorted</strong></div></div>` + oobCount + oobActivity))
 		}
 	}
 }

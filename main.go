@@ -14,10 +14,12 @@ import (
 var staticFS embed.FS
 
 func newServer(rl *rateLimiter, ctr *counter) http.Handler {
+	act := newActivityLog(20)
 	mux := http.NewServeMux()
 	mux.Handle("POST /is-sorted", rl.middleware(isSortedHandler(ctr)))
-	mux.Handle("POST /check", rl.middleware(checkFormHandler(ctr)))
+	mux.Handle("POST /check", rl.middleware(checkFormHandler(ctr, act)))
 	mux.Handle("GET /count", countHandler(ctr))
+	mux.Handle("GET /activity", activityHandler(act))
 	sub, _ := fs.Sub(staticFS, "static")
 	mux.Handle("GET /", http.FileServer(http.FS(sub)))
 	return mux

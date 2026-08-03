@@ -322,6 +322,66 @@ code {
   font-family: monospace;
 }
 
+/* activity feed */
+.activity-sidebar {
+  display: none;
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 148px;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+}
+@media (min-width: 1080px) {
+  .activity-sidebar { display: block; }
+}
+.activity-title {
+  font-size: 10px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+.activity-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 11px;
+}
+.activity-entry:last-child {
+  border-bottom: none;
+}
+.activity-entry.yes .activity-icon { color: #16a34a; font-weight: 700; }
+.activity-entry.no .activity-icon { color: #dc2626; font-weight: 700; }
+.activity-label {
+  color: #334155;
+  flex: 1;
+}
+.activity-list {
+  color: #64748b;
+  font-family: monospace;
+  font-size: 10px;
+  width: 100%;
+  word-break: break-all;
+}
+.activity-time {
+  color: #94a3b8;
+  width: 100%;
+  font-size: 10px;
+}
+.activity-empty {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+}
+
 /* footer */
 .footer {
   display: flex;
