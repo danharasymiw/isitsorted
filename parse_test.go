@@ -75,6 +75,20 @@ func TestParseValue(t *testing.T) {
 		{"minus pi", "-pi", rat("-314159265358979323846/100000000000000000000"), false},
 		{"Pi case insensitive", "Pi", rat("314159265358979323846/100000000000000000000"), false},
 
+		// Expressions
+		{"unary double neg", "-(-1)", rat("1"), false},
+		{"addition", "1+2", rat("3"), false},
+		{"subtraction", "10-3", rat("7"), false},
+		{"multiplication", "3*4", rat("12"), false},
+		{"division", "10/4", rat("5/2"), false},
+		{"power", "2^10", rat("1024"), false},
+		{"parens", "(1+2)*3", rat("9"), false},
+		{"nested parens", "((2+3))", rat("5"), false},
+		{"expr with constant", "pi*2", rat("628318530717958647692/100000000000000000000"), false},
+		{"unary plus", "+5", rat("5"), false},
+		{"division by zero", "1/0", nil, true},
+		{"non-integer exponent", "2^1.5", nil, true},
+
 		// Errors
 		{"empty", "", nil, true},
 		{"garbage", "banana", nil, true},

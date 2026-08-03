@@ -91,16 +91,28 @@ func checkFormHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 		}
 
 		raw := r.FormValue("list")
-		parts := strings.FieldsFunc(raw, func(c rune) bool {
-			return c == ',' || c == '\n' || c == '\r'
-		})
+		// Split on newlines first (blank lines are skipped), then on individual
+		// commas within each line. Consecutive commas produce an empty field
+		// which is an error; a trailing comma is silently ignored.
+		lines := strings.FieldsFunc(raw, func(c rune) bool { return c == '\n' || c == '\r' })
+		var tokens []string
+		for _, line := range lines {
+			fields := strings.Split(line, ",")
+			// Drop trailing empty field from a trailing comma.
+			if len(fields) > 0 && strings.TrimSpace(fields[len(fields)-1]) == "" {
+				fields = fields[:len(fields)-1]
+			}
+			tokens = append(tokens, fields...)
+		}
 
 		var list []*big.Rat
 		var rawList []string
-		for _, p := range parts {
+		for _, p := range tokens {
 			p = strings.TrimSpace(p)
 			if p == "" {
-				continue
+				w.Header().Set("Content-Type", "text/html")
+				w.Write([]byte(`<div class="result-card error"><span class="result-icon">!</span><div><strong>Invalid input</strong><p>Empty value — remove consecutive commas.</p></div></div>`))
+				return
 			}
 			v, err := parseValue(p)
 			if err != nil {

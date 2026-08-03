@@ -72,14 +72,30 @@ func parseValue(s string) (*big.Rat, error) {
 		return nil, fmt.Errorf("empty value")
 	}
 
-	// Try numeric first — handles ints, floats, and big integers.
+	// Fast path: plain number (int, decimal, rational like 1/3).
 	r := new(big.Rat)
 	if _, ok := r.SetString(s); ok {
 		return r, nil
 	}
 
-	// Try math constants (with optional negative prefix).
+	// Prefixed integer literals: 0b (binary), 0x (hex), 0o (octal).
+	if n, ok := new(big.Int).SetString(s, 0); ok {
+		return new(big.Rat).SetInt(n), nil
+	}
+
+	// Scientific notation (e.g. 2.5e-3, 1E10).
+	if f, ok := new(big.Float).SetPrec(256).SetString(s); ok {
+		rat, _ := f.Rat(nil)
+		return rat, nil
+	}
+
+	// Math constants with optional negative/minus prefix ("negative pi", "-pi").
 	if v, ok := parseConstant(s); ok {
+		return v, nil
+	}
+
+	// Arithmetic expression (handles operators, parens, constants).
+	if v, err := parseExprString(s); err == nil {
 		return v, nil
 	}
 
