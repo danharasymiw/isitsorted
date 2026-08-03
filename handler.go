@@ -126,7 +126,7 @@ func checkFormHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 
 		sorted := check(list, order)
 		ctr.increment(sorted)
-		act.add(sorted, rawList)
+		act.add(sorted, order, rawList)
 		oobCount := `<div id="count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.value()) + `</div>`
 		oobSorted := `<div id="sorted-count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.sortedValue()) + `</div>`
 		oobNotSorted := `<div id="not-sorted-count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.notSortedValue()) + `</div>`

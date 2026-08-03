@@ -66,8 +66,36 @@ func rat20(s string) *big.Rat {
 // parseValue converts a string to *big.Rat. It accepts plain integers,
 // decimal floats, rationals (e.g. "3/4"), math constants (pi, e, tau, phi),
 // and English number words (e.g. "forty-two", "three hundred thousand").
+func normalizeEmoji(s string) string {
+	hasEmoji := false
+	for _, r := range s {
+		if r == 0xFE0F || r == 0x20E3 || r == 0x1F51F || r == 0x1F522 {
+			hasEmoji = true
+			break
+		}
+	}
+	if !hasEmoji {
+		return s
+	}
+	var b strings.Builder
+	for _, r := range s {
+		switch r {
+		case 0xFE0F, 0x20E3:
+			// strip variation selector and combining keycap
+		case 0x1F522:
+			b.WriteString("1234")
+		case 0x1F51F:
+			b.WriteString("10")
+		default:
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
 func parseValue(s string) (*big.Rat, error) {
 	s = strings.TrimSpace(s)
+	s = normalizeEmoji(s)
 	if s == "" {
 		return nil, fmt.Errorf("empty value")
 	}

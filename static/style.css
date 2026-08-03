@@ -364,6 +364,10 @@ code {
   color: #334155;
   flex: 1;
 }
+.activity-order {
+  color: #94a3b8;
+  font-size: 10px;
+}
 .activity-list {
   color: #64748b;
   font-family: monospace;

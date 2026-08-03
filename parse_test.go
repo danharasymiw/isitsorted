@@ -92,6 +92,15 @@ func TestParseValue(t *testing.T) {
 		{"division by zero", "1/0", nil, true},
 		{"non-integer exponent", "2^1.5", nil, true},
 
+		// Emoji digits
+		{"emoji single", "3️⃣", rat("3"), false},
+		{"emoji multi", "1️⃣2️⃣3️⃣", rat("123"), false},
+		{"emoji keycap ten", "🔟", rat("10"), false},
+		{"emoji 🔢", "🔢", rat("1234"), false},
+		{"emoji 🔢5️⃣", "🔢5️⃣", rat("12345"), false},
+		{"emoji in expr", "2️⃣^1️⃣0️⃣", rat("1024"), false},
+		{"emoji mixed", "1️⃣0️⃣+5️⃣", rat("15"), false},
+
 		// Errors
 		{"empty", "", nil, true},
 		{"garbage", "banana", nil, true},

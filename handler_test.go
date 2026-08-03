@@ -11,7 +11,7 @@ import (
 
 func TestIsSortedHandler(t *testing.T) {
 	rl := newRateLimiter(100, time.Minute)
-	srv := httptest.NewServer(newServer(rl, &counter{}))
+	srv := httptest.NewServer(newServer(rl, &counter{}, newActivityLog(20, "")))
 	defer srv.Close()
 
 	post := func(body string) *http.Response {
@@ -143,7 +143,7 @@ func TestIsSortedHandler(t *testing.T) {
 
 	t.Run("rate limit returns 429", func(t *testing.T) {
 		strictRL := newRateLimiter(2, time.Minute)
-		strictSrv := httptest.NewServer(newServer(strictRL, &counter{}))
+		strictSrv := httptest.NewServer(newServer(strictRL, &counter{}, newActivityLog(20, "")))
 		defer strictSrv.Close()
 		for i := 0; i < 2; i++ {
 			http.Post(strictSrv.URL+"/is-sorted", "application/json", strings.NewReader(`{"list":[1,2]}`))
