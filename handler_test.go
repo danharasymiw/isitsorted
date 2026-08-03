@@ -11,7 +11,7 @@ import (
 
 func TestIsSortedHandler(t *testing.T) {
 	rl := newRateLimiter(100, time.Minute)
-	srv := httptest.NewServer(newServer(rl))
+	srv := httptest.NewServer(newServer(rl, &counter{}))
 	defer srv.Close()
 
 	post := func(body string) *http.Response {
@@ -87,7 +87,6 @@ func TestIsSortedHandler(t *testing.T) {
 	})
 
 	t.Run("body exceeding 1MB returns 400", func(t *testing.T) {
-		// ~1.14MB: exceeds the 1MB MaxBytesReader limit
 		big := `{"list":[` + strings.Repeat("1,", 600000) + `0],"order":"asc"}`
 		resp, err := http.Post(srv.URL+"/is-sorted", "application/json", strings.NewReader(big))
 		if err != nil {
@@ -100,7 +99,7 @@ func TestIsSortedHandler(t *testing.T) {
 
 	t.Run("rate limit returns 429", func(t *testing.T) {
 		strictRL := newRateLimiter(2, time.Minute)
-		strictSrv := httptest.NewServer(newServer(strictRL))
+		strictSrv := httptest.NewServer(newServer(strictRL, &counter{}))
 		defer strictSrv.Close()
 		for i := 0; i < 2; i++ {
 			http.Post(strictSrv.URL+"/is-sorted", "application/json", strings.NewReader(`{"list":[1,2]}`))
