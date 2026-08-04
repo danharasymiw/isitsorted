@@ -214,6 +214,34 @@ func TestIsSortedHandler(t *testing.T) {
 	})
 }
 
+func TestCountHandler(t *testing.T) {
+	rl := newRateLimiter(100, time.Minute)
+	ctr := &counter{}
+	srv := httptest.NewServer(newServer(rl, ctr, newActivityLog(20, "")))
+	defer srv.Close()
+
+	// Submit one sorted and one unsorted to populate counters.
+	http.Post(srv.URL+"/is-sorted", "application/json", strings.NewReader(`{"list":[1,2,3]}`))
+	http.Post(srv.URL+"/is-sorted", "application/json", strings.NewReader(`{"list":[3,1,2]}`))
+
+	resp, err := http.Get(srv.URL + "/count")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	s := string(body)
+
+	if !strings.Contains(s, "2") {
+		t.Errorf("want total count 2 in response, got: %s", s)
+	}
+	if !strings.Contains(s, `id="sorted-count-display"`) {
+		t.Errorf("want sorted OOB swap in response, got: %s", s)
+	}
+	if !strings.Contains(s, `id="not-sorted-count-display"`) {
+		t.Errorf("want not-sorted OOB swap in response, got: %s", s)
+	}
+}
+
 func TestCheckFormHandler(t *testing.T) {
 	rl := newRateLimiter(100, time.Minute)
 	srv := httptest.NewServer(newServer(rl, &counter{}, newActivityLog(20, "")))

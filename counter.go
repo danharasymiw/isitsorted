@@ -96,21 +96,9 @@ func (c *counter) save() {
 func countHandler(ctr *counter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(w, formatCount(ctr.value()))
-	}
-}
-
-func sortedCountHandler(ctr *counter) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(w, formatCount(ctr.sortedValue()))
-	}
-}
-
-func notSortedCountHandler(ctr *counter) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(w, formatCount(ctr.notSortedValue()))
+		fmt.Fprint(w, formatCount(ctr.value())+
+			`<div id="sorted-count-display" hx-swap-oob="innerHTML">`+formatCount(ctr.sortedValue())+`</div>`+
+			`<div id="not-sorted-count-display" hx-swap-oob="innerHTML">`+formatCount(ctr.notSortedValue())+`</div>`)
 	}
 }
 

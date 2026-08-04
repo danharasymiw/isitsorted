@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http/httptest"
 	"path/filepath"
 	"testing"
 )
@@ -32,23 +31,6 @@ func TestCounter_PersistsAcrossRestarts(t *testing.T) {
 	c2 := newCounter(path)
 	if c2.value() != 3 {
 		t.Fatalf("want 3 after reload, got %d", c2.value())
-	}
-}
-
-func TestCountHandler(t *testing.T) {
-	c := newCounter(filepath.Join(t.TempDir(), "count.json"))
-	c.increment(true)
-	c.increment(true)
-
-	req := httptest.NewRequest("GET", "/count", nil)
-	w := httptest.NewRecorder()
-	countHandler(c)(w, req)
-
-	if w.Code != 200 {
-		t.Fatalf("want 200, got %d", w.Code)
-	}
-	if w.Body.String() != "2" {
-		t.Fatalf("want body \"2\", got %q", w.Body.String())
 	}
 }
 

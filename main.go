@@ -18,8 +18,6 @@ func newServer(rl *rateLimiter, ctr *counter, act *activityLog) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("POST /is-sorted", rl.middleware(isSortedHandler(ctr, act)))
 	mux.Handle("GET /count", countHandler(ctr))
-	mux.Handle("GET /count/sorted", sortedCountHandler(ctr))
-	mux.Handle("GET /count/not-sorted", notSortedCountHandler(ctr))
 	mux.Handle("GET /activity", activityHandler(act))
 	mux.Handle("POST /async/is-sorted", rl.middleware(asyncSubmitHandler(js, ctr, act)))
 	mux.Handle("GET /async/is-sorted/{id}", asyncStatusHandler(js))
