@@ -196,6 +196,18 @@ func TestParseValueRanges(t *testing.T) {
 		{"closed interval comma", "[9, 11]", rat("9"), rat("11"), false},
 		{"interval with floats", "[1.5..3.5]", rat("3/2"), rat("7/2"), false},
 		{"interval with negatives", "[-5..5]", rat("-5"), rat("5"), false},
+
+		// Finite sets
+		{"set of three", "{1, 3, 7}", rat("1"), rat("7"), false},
+		{"set of two", "{5, 10}", rat("5"), rat("10"), false},
+		{"set single", "{42}", rat("42"), rat("42"), false},
+		{"set unordered", "{7, 2, 9, 1}", rat("1"), rat("9"), false},
+
+		// Set-builder notation
+		{"set-builder closed", "{x | x ∈ [9..11]}", rat("9"), rat("11"), false},
+		{"set-builder open", "{x | x ∈ (0..100)}", rat("0"), rat("100"), false},
+		{"set-builder with in", "{n | n in [1..5]}", rat("1"), rat("5"), false},
+		{"set-builder colon", "{x : x ∈ [9..11]}", rat("9"), rat("11"), false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
