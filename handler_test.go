@@ -155,6 +155,53 @@ func TestIsSortedHandler(t *testing.T) {
 			t.Fatalf("want 429, got %d", resp.StatusCode)
 		}
 	})
+
+	t.Run("uncertainty string ascending sorted", func(t *testing.T) {
+		resp := post(`{"list":["7","10±2","15"],"order":"asc"}`)
+		if resp.StatusCode != 200 {
+			t.Fatalf("want 200, got %d", resp.StatusCode)
+		}
+		if !decodeBool(resp, "sorted") {
+			t.Error("want sorted=true")
+		}
+	})
+
+	t.Run("uncertainty string not sorted", func(t *testing.T) {
+		resp := post(`{"list":["9","10±2","11"],"order":"asc"}`)
+		if decodeBool(resp, "sorted") {
+			t.Error("want sorted=false")
+		}
+	})
+
+	t.Run("interval notation sorted", func(t *testing.T) {
+		resp := post(`{"list":["1","[5..8]","20"],"order":"asc"}`)
+		if resp.StatusCode != 200 {
+			t.Fatalf("want 200, got %d", resp.StatusCode)
+		}
+		if !decodeBool(resp, "sorted") {
+			t.Error("want sorted=true")
+		}
+	})
+
+	t.Run("set notation sorted", func(t *testing.T) {
+		resp := post(`{"list":["{1, 3, 5}","10","20"],"order":"asc"}`)
+		if resp.StatusCode != 200 {
+			t.Fatalf("want 200, got %d", resp.StatusCode)
+		}
+		if !decodeBool(resp, "sorted") {
+			t.Error("want sorted=true")
+		}
+	})
+
+	t.Run("expression with uncertainty", func(t *testing.T) {
+		resp := post(`{"list":["1","(10±1)*2","30"],"order":"asc"}`)
+		if resp.StatusCode != 200 {
+			t.Fatalf("want 200, got %d", resp.StatusCode)
+		}
+		if !decodeBool(resp, "sorted") {
+			t.Error("want sorted=true for [1, {18..22}, 30]")
+		}
+	})
 }
 
 func TestCheckFormHandler(t *testing.T) {
