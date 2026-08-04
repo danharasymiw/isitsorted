@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>isitsorted.ca Status</title>
+  <link rel="stylesheet" href="/status.css" />
+</head>
+<body>
+  <div class="status-page">
+    <header class="status-header">
+      <span class="status-dot"></span>
+      <span class="status-brand">isitsorted.ca</span>
+    </header>
+
+    <section class="status-hero">
+      <span class="status-hero-check">&#10003;</span>
+      <h1>All Systems Operational</h1>
+    </section>
+
+    <section class="status-components">
+      <div class="status-component"><span class="component-name">Sort Checker</span><span class="component-status"><span class="status-dot"></span> Operational</span></div>
+      <div class="status-component"><span class="component-name">Async API</span><span class="component-status"><span class="status-dot"></span> Operational</span></div>
+      <div class="status-component"><span class="component-name">Counter</span><span class="component-status"><span class="status-dot"></span> Operational</span></div>
+      <div class="status-component"><span class="component-name">Activity Feed</span><span class="component-status"><span class="status-dot"></span> Operational</span></div>
+      <div class="status-component"><span class="component-name">Website</span><span class="component-status"><span class="status-dot"></span> Operational</span></div>
+    </section>
+
+    <section class="status-uptime">
+      <h2>Uptime</h2>
+      {{range $idx, $comp := (slice (mkSlice "Sort Checker" "Async API" "Counter" "Activity Feed" "Website") 0 5)}}
+      <div class="uptime-row">
+        <div class="uptime-label">{{$comp}}</div>
+        <div class="uptime-bar">
+          {{range $.Days}}<div class="uptime-day" title="{{.Date}}"></div>{{end}}
+        </div>
+        <div class="uptime-range">
+          <span>90 days ago</span>
+          <span>Today</span>
+        </div>
+        <div class="uptime-pct">100% uptime</div>
+      </div>
+      {{end}}
+    </section>
+
+    <section class="status-incidents">
+      <h2>Past Incidents</h2>
+      <p class="incidents-none">No incidents reported.</p>
+    </section>
+  </div>
+</body>
+</html>

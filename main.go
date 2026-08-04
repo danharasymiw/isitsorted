@@ -38,6 +38,14 @@ func main() {
 	ctr := newCounter(filepath.Join(dataDir, "count.json"))
 	act := newActivityLog(20, filepath.Join(dataDir, "activity.json"))
 	rl := newRateLimiter(100, time.Minute)
+
+	appH := newServer(rl, ctr, act)
+	statusMux := http.NewServeMux()
+	sub, _ := fs.Sub(staticFS, "static")
+	statusMux.Handle("GET /", statusHandler())
+	statusMux.Handle("GET /status.css", http.FileServer(http.FS(sub)))
+	router := hostRouter(statusMux, appH)
+
 	log.Printf("listening on :%s", port)
-	log.Fatal(http.ListenAndServe(":"+port, newServer(rl, ctr, act)))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
