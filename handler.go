@@ -36,107 +36,116 @@ func parseRaw(raw json.RawMessage) (*parser.Value, error) {
 	return parser.ParseValue(s)
 }
 
-func isSortedHandler(ctr *counter) http.HandlerFunc {
+func isSortedHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
-		var req sortRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-			return
+		ct := r.Header.Get("Content-Type")
+		if strings.HasPrefix(ct, "application/x-www-form-urlencoded") {
+			handleForm(w, r, ctr, act)
+		} else {
+			handleJSON(w, r, ctr, act)
 		}
-		if req.List == nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "list is required"})
-			return
-		}
-		if req.Order == "" {
-			req.Order = "asc"
-		}
-		if req.Order != "asc" && req.Order != "desc" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": `order must be "asc" or "desc"`})
-			return
-		}
-
-		list := make([]*parser.Value, 0, len(req.List))
-		for _, raw := range req.List {
-			v, err := parseRaw(raw)
-			if err != nil {
-				writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-				return
-			}
-			list = append(list, v)
-		}
-
-		sorted := check(list, req.Order)
-		ctr.increment(sorted)
-		writeJSON(w, http.StatusOK, map[string]bool{"sorted": sorted})
 	}
 }
 
-func checkFormHandler(ctr *counter, act *activityLog) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
-		if err := r.ParseForm(); err != nil {
-			http.Error(w, "bad request", http.StatusBadRequest)
+func handleJSON(w http.ResponseWriter, r *http.Request, ctr *counter, act *activityLog) {
+	var req sortRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	if req.List == nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "list is required"})
+		return
+	}
+	if req.Order == "" {
+		req.Order = "asc"
+	}
+	if req.Order != "asc" && req.Order != "desc" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": `order must be "asc" or "desc"`})
+		return
+	}
+
+	list := make([]*parser.Value, 0, len(req.List))
+	rawList := make([]string, 0, len(req.List))
+	for _, raw := range req.List {
+		v, err := parseRaw(raw)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}
+		list = append(list, v)
+		rawList = append(rawList, strings.TrimSpace(string(raw)))
+	}
 
-		order := r.FormValue("order")
-		if order == "" {
-			order = "asc"
+	sorted := check(list, req.Order)
+	ctr.increment(sorted)
+	act.add(sorted, req.Order, rawList)
+	writeJSON(w, http.StatusOK, map[string]bool{"sorted": sorted})
+}
+
+func handleForm(w http.ResponseWriter, r *http.Request, ctr *counter, act *activityLog) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	order := r.FormValue("order")
+	if order == "" {
+		order = "asc"
+	}
+	if order != "asc" && order != "desc" {
+		http.Error(w, "invalid order", http.StatusBadRequest)
+		return
+	}
+
+	raw := r.FormValue("list")
+	// Split on newlines first (blank lines are skipped), then on individual
+	// commas within each line. Consecutive commas produce an empty field
+	// which is an error; a trailing comma is silently ignored.
+	lines := strings.FieldsFunc(raw, func(c rune) bool { return c == '\n' || c == '\r' })
+	var tokens []string
+	for _, line := range lines {
+		fields := parser.SplitBracketAware(line, ',')
+		// Drop trailing empty field from a trailing comma.
+		if len(fields) > 0 && strings.TrimSpace(fields[len(fields)-1]) == "" {
+			fields = fields[:len(fields)-1]
 		}
-		if order != "asc" && order != "desc" {
-			http.Error(w, "invalid order", http.StatusBadRequest)
+		tokens = append(tokens, fields...)
+	}
+
+	var list []*parser.Value
+	var rawList []string
+	for _, p := range tokens {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte(`<div class="result-card error"><span class="result-icon">!</span><div><strong>Invalid input</strong><p>Empty value — remove consecutive commas.</p></div></div>`))
 			return
 		}
-
-		raw := r.FormValue("list")
-		// Split on newlines first (blank lines are skipped), then on individual
-		// commas within each line. Consecutive commas produce an empty field
-		// which is an error; a trailing comma is silently ignored.
-		lines := strings.FieldsFunc(raw, func(c rune) bool { return c == '\n' || c == '\r' })
-		var tokens []string
-		for _, line := range lines {
-			fields := parser.SplitBracketAware(line, ',')
-			// Drop trailing empty field from a trailing comma.
-			if len(fields) > 0 && strings.TrimSpace(fields[len(fields)-1]) == "" {
-				fields = fields[:len(fields)-1]
-			}
-			tokens = append(tokens, fields...)
+		v, err := parser.ParseValue(p)
+		if err != nil {
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte(`<div class="result-card error"><span class="result-icon">!</span><div><strong>Invalid input</strong><p>Could not parse &#34;` + htmlEscape(p) + `&#34; as a number.</p></div></div>`))
+			return
 		}
+		list = append(list, v)
+		rawList = append(rawList, p)
+	}
 
-		var list []*parser.Value
-		var rawList []string
-		for _, p := range tokens {
-			p = strings.TrimSpace(p)
-			if p == "" {
-				w.Header().Set("Content-Type", "text/html")
-				w.Write([]byte(`<div class="result-card error"><span class="result-icon">!</span><div><strong>Invalid input</strong><p>Empty value — remove consecutive commas.</p></div></div>`))
-				return
-			}
-			v, err := parser.ParseValue(p)
-			if err != nil {
-				w.Header().Set("Content-Type", "text/html")
-				w.Write([]byte(`<div class="result-card error"><span class="result-icon">!</span><div><strong>Invalid input</strong><p>Could not parse &#34;` + htmlEscape(p) + `&#34; as a number.</p></div></div>`))
-				return
-			}
-			list = append(list, v)
-			rawList = append(rawList, p)
-		}
-
-		sorted := check(list, order)
-		ctr.increment(sorted)
-		act.add(sorted, order, rawList)
-		oobCount := `<div id="count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.value()) + `</div>`
-		oobSorted := `<div id="sorted-count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.sortedValue()) + `</div>`
-		oobNotSorted := `<div id="not-sorted-count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.notSortedValue()) + `</div>`
-		oobActivity := `<div id="activity-feed" hx-swap-oob="innerHTML">` + renderActivity(act.recent()) + `</div>`
-		w.Header().Set("Content-Type", "text/html")
-		if sorted {
-			w.Write([]byte(`<div class="result-card yes"><span class="result-icon">✓</span><div><strong>Yes, it&#39;s sorted</strong></div></div>` + oobCount + oobSorted + oobNotSorted + oobActivity))
-		} else {
-			w.Write([]byte(`<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it&#39;s not sorted</strong></div></div>` + oobCount + oobSorted + oobNotSorted + oobActivity))
-		}
+	sorted := check(list, order)
+	ctr.increment(sorted)
+	act.add(sorted, order, rawList)
+	oobCount := `<div id="count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.value()) + `</div>`
+	oobSorted := `<div id="sorted-count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.sortedValue()) + `</div>`
+	oobNotSorted := `<div id="not-sorted-count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.notSortedValue()) + `</div>`
+	oobActivity := `<div id="activity-feed" hx-swap-oob="innerHTML">` + renderActivity(act.recent()) + `</div>`
+	w.Header().Set("Content-Type", "text/html")
+	if sorted {
+		w.Write([]byte(`<div class="result-card yes"><span class="result-icon">✓</span><div><strong>Yes, it&#39;s sorted</strong></div></div>` + oobCount + oobSorted + oobNotSorted + oobActivity))
+	} else {
+		w.Write([]byte(`<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it&#39;s not sorted</strong></div></div>` + oobCount + oobSorted + oobNotSorted + oobActivity))
 	}
 }
 

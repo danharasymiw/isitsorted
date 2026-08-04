@@ -16,8 +16,7 @@ var staticFS embed.FS
 func newServer(rl *rateLimiter, ctr *counter, act *activityLog) http.Handler {
 	js := newJobStore()
 	mux := http.NewServeMux()
-	mux.Handle("POST /is-sorted", rl.middleware(isSortedHandler(ctr)))
-	mux.Handle("POST /check", rl.middleware(checkFormHandler(ctr, act)))
+	mux.Handle("POST /is-sorted", rl.middleware(isSortedHandler(ctr, act)))
 	mux.Handle("GET /count", countHandler(ctr))
 	mux.Handle("GET /count/sorted", sortedCountHandler(ctr))
 	mux.Handle("GET /count/not-sorted", notSortedCountHandler(ctr))

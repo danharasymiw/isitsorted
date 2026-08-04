@@ -220,7 +220,7 @@ func TestCheckFormHandler(t *testing.T) {
 	defer srv.Close()
 
 	t.Run("uncertainty via form", func(t *testing.T) {
-		resp, err := http.PostForm(srv.URL+"/check", url.Values{
+		resp, err := http.PostForm(srv.URL+"/is-sorted", url.Values{
 			"list":  {"7\n10±2\n15"},
 			"order": {"asc"},
 		})
@@ -234,7 +234,7 @@ func TestCheckFormHandler(t *testing.T) {
 	})
 
 	t.Run("finite set via form", func(t *testing.T) {
-		resp, err := http.PostForm(srv.URL+"/check", url.Values{
+		resp, err := http.PostForm(srv.URL+"/is-sorted", url.Values{
 			"list":  {"{1, 3, 7}, 10, 15"},
 			"order": {"asc"},
 		})
@@ -248,7 +248,7 @@ func TestCheckFormHandler(t *testing.T) {
 	})
 
 	t.Run("discrete sets with valid pick sorted", func(t *testing.T) {
-		resp, err := http.PostForm(srv.URL+"/check", url.Values{
+		resp, err := http.PostForm(srv.URL+"/is-sorted", url.Values{
 			"list":  {"10±2, 10±5"},
 			"order": {"asc"},
 		})
@@ -262,7 +262,7 @@ func TestCheckFormHandler(t *testing.T) {
 	})
 
 	t.Run("discrete sets no valid pick", func(t *testing.T) {
-		resp, err := http.PostForm(srv.URL+"/check", url.Values{
+		resp, err := http.PostForm(srv.URL+"/is-sorted", url.Values{
 			"list":  {"10±1, 9, 10±2, 11"},
 			"order": {"asc"},
 		})
