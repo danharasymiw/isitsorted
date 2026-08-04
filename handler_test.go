@@ -173,6 +173,16 @@ func TestIsSortedHandler(t *testing.T) {
 		}
 	})
 
+	t.Run("uncertainty pick equals neighbor", func(t *testing.T) {
+		resp := post(`{"list":["10±1","9"],"order":"asc"}`)
+		if resp.StatusCode != 200 {
+			t.Fatalf("want 200, got %d", resp.StatusCode)
+		}
+		if !decodeBool(resp, "sorted") {
+			t.Error("want sorted=true (pick 9 from {9,11})")
+		}
+	})
+
 	t.Run("interval notation sorted", func(t *testing.T) {
 		resp := post(`{"list":["1","[5..8]","20"],"order":"asc"}`)
 		if resp.StatusCode != 200 {
@@ -237,9 +247,23 @@ func TestCheckFormHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("overlapping ranges not sorted", func(t *testing.T) {
+	t.Run("discrete sets with valid pick sorted", func(t *testing.T) {
 		resp, err := http.PostForm(srv.URL+"/check", url.Values{
 			"list":  {"10±2, 10±5"},
+			"order": {"asc"},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		if !strings.Contains(string(body), "Yes") {
+			t.Errorf("expected sorted (pick 8,15), got: %s", body)
+		}
+	})
+
+	t.Run("discrete sets no valid pick", func(t *testing.T) {
+		resp, err := http.PostForm(srv.URL+"/check", url.Values{
+			"list":  {"10±1, 9, 10±2, 11"},
 			"order": {"asc"},
 		})
 		if err != nil {

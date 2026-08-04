@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"math/big"
+	"sort"
 	"strings"
 )
 
@@ -56,11 +57,10 @@ func normalizeEmoji(s string) string {
 	return b.String()
 }
 
-// Value represents a parsed value, which may be an exact point or a range
-// (e.g. from "±" uncertainty notation).
 type Value struct {
-	Min *big.Rat
-	Max *big.Rat
+	Min    *big.Rat
+	Max    *big.Rat
+	Points []*big.Rat // non-nil for discrete sets (±, {1,3,7}); nil for continuous ranges/points
 }
 
 // PointValue wraps a single *big.Rat as an exact (zero-width) Value.
@@ -68,9 +68,37 @@ func PointValue(r *big.Rat) *Value {
 	return &Value{Min: r, Max: r}
 }
 
+// DiscreteValue builds a Value from a set of discrete points, deduplicating
+// and sorting them, and setting Min/Max to the extremes.
+func DiscreteValue(pts []*big.Rat) *Value {
+	if len(pts) == 0 {
+		panic("DiscreteValue: empty points")
+	}
+	sort.Slice(pts, func(i, j int) bool { return pts[i].Cmp(pts[j]) < 0 })
+	deduped := []*big.Rat{pts[0]}
+	for i := 1; i < len(pts); i++ {
+		if pts[i].Cmp(pts[i-1]) != 0 {
+			deduped = append(deduped, pts[i])
+		}
+	}
+	if len(deduped) == 1 {
+		return PointValue(deduped[0])
+	}
+	return &Value{
+		Min:    deduped[0],
+		Max:    deduped[len(deduped)-1],
+		Points: deduped,
+	}
+}
+
 // IsPoint reports whether the value is an exact point (Min == Max).
 func (v *Value) IsPoint() bool {
 	return v.Min.Cmp(v.Max) == 0
+}
+
+// IsDiscrete reports whether the value is a discrete set of points.
+func (v *Value) IsDiscrete() bool {
+	return v.Points != nil
 }
 
 func ParseValue(s string) (*Value, error) {

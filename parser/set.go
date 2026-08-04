@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"math/big"
 	"strings"
 	"unicode"
 )
@@ -62,16 +63,13 @@ func trySetBuilder(inner string) (*Value, bool) {
 	return v, true
 }
 
-// tryFiniteSet handles notation of the form "1, 3, 7", parsing each element
-// recursively via ParseValue and taking the min of all Mins and max of all
-// Maxes as the resulting range.
 func tryFiniteSet(inner string) (*Value, bool) {
 	parts := SplitBracketAware(inner, ',')
 	if len(parts) == 0 {
 		return nil, false
 	}
 
-	var minVal, maxVal *Value
+	values := make([]*Value, 0, len(parts))
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		if part == "" {
@@ -81,19 +79,35 @@ func tryFiniteSet(inner string) (*Value, bool) {
 		if err != nil {
 			return nil, false
 		}
-		if minVal == nil {
-			minVal = v
-			maxVal = v
+		values = append(values, v)
+	}
+
+	var allPoints []*big.Rat
+	for _, v := range values {
+		if v.Points != nil {
+			allPoints = append(allPoints, v.Points...)
+		} else if v.IsPoint() {
+			allPoints = append(allPoints, v.Min)
 		} else {
-			if v.Min.Cmp(minVal.Min) < 0 {
-				minVal = v
-			}
-			if v.Max.Cmp(maxVal.Max) > 0 {
-				maxVal = v
-			}
+			allPoints = nil
+			break
 		}
 	}
-	return &Value{Min: minVal.Min, Max: maxVal.Max}, true
+
+	if allPoints != nil {
+		return DiscreteValue(allPoints), true
+	}
+
+	minR, maxR := values[0].Min, values[0].Max
+	for _, v := range values[1:] {
+		if v.Min.Cmp(minR) < 0 {
+			minR = v.Min
+		}
+		if v.Max.Cmp(maxR) > 0 {
+			maxR = v.Max
+		}
+	}
+	return &Value{Min: minR, Max: maxR}, true
 }
 
 // SplitBracketAware splits s on sep, ignoring occurrences of sep that are

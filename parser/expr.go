@@ -66,10 +66,7 @@ func (p *exprParser) parseAddSub() (*Value, error) {
 		case '-':
 			left = valSub(left, right)
 		case '±':
-			left = &Value{
-				Min: new(big.Rat).Sub(left.Min, right.Max),
-				Max: new(big.Rat).Add(left.Max, right.Max),
-			}
+			left = valPlusMinus(left, right)
 		}
 	}
 	return left, nil
@@ -259,7 +256,53 @@ func (p *exprParser) parseAtom() (*Value, error) {
 	return nil, fmt.Errorf("unexpected %q", ch)
 }
 
+const maxDiscretePoints = 1024
+
+func discretePoints(v *Value) []*big.Rat {
+	if v.Points != nil {
+		return v.Points
+	}
+	if v.IsPoint() {
+		return []*big.Rat{v.Min}
+	}
+	return nil
+}
+
+func valPlusMinus(a, b *Value) *Value {
+	ap, bp := discretePoints(a), discretePoints(b)
+	if ap != nil && bp != nil {
+		var out []*big.Rat
+		for _, x := range ap {
+			for _, y := range bp {
+				out = append(out,
+					new(big.Rat).Sub(new(big.Rat).Set(x), y),
+					new(big.Rat).Add(new(big.Rat).Set(x), y),
+				)
+			}
+		}
+		if len(out) <= maxDiscretePoints {
+			return DiscreteValue(out)
+		}
+	}
+	return &Value{
+		Min: new(big.Rat).Sub(a.Min, b.Max),
+		Max: new(big.Rat).Add(a.Max, b.Max),
+	}
+}
+
 func valAdd(a, b *Value) *Value {
+	ap, bp := discretePoints(a), discretePoints(b)
+	if ap != nil && bp != nil {
+		var out []*big.Rat
+		for _, x := range ap {
+			for _, y := range bp {
+				out = append(out, new(big.Rat).Add(new(big.Rat).Set(x), y))
+			}
+		}
+		if len(out) <= maxDiscretePoints {
+			return DiscreteValue(out)
+		}
+	}
 	return &Value{
 		Min: new(big.Rat).Add(a.Min, b.Min),
 		Max: new(big.Rat).Add(a.Max, b.Max),
@@ -267,6 +310,18 @@ func valAdd(a, b *Value) *Value {
 }
 
 func valSub(a, b *Value) *Value {
+	ap, bp := discretePoints(a), discretePoints(b)
+	if ap != nil && bp != nil {
+		var out []*big.Rat
+		for _, x := range ap {
+			for _, y := range bp {
+				out = append(out, new(big.Rat).Sub(new(big.Rat).Set(x), y))
+			}
+		}
+		if len(out) <= maxDiscretePoints {
+			return DiscreteValue(out)
+		}
+	}
 	return &Value{
 		Min: new(big.Rat).Sub(a.Min, b.Max),
 		Max: new(big.Rat).Sub(a.Max, b.Min),
@@ -274,6 +329,13 @@ func valSub(a, b *Value) *Value {
 }
 
 func valNeg(a *Value) *Value {
+	if a.Points != nil {
+		out := make([]*big.Rat, len(a.Points))
+		for i, p := range a.Points {
+			out[i] = new(big.Rat).Neg(p)
+		}
+		return DiscreteValue(out)
+	}
 	return &Value{
 		Min: new(big.Rat).Neg(a.Max),
 		Max: new(big.Rat).Neg(a.Min),
@@ -281,6 +343,18 @@ func valNeg(a *Value) *Value {
 }
 
 func valMul(a, b *Value) *Value {
+	ap, bp := discretePoints(a), discretePoints(b)
+	if ap != nil && bp != nil {
+		var out []*big.Rat
+		for _, x := range ap {
+			for _, y := range bp {
+				out = append(out, new(big.Rat).Mul(new(big.Rat).Set(x), y))
+			}
+		}
+		if len(out) <= maxDiscretePoints {
+			return DiscreteValue(out)
+		}
+	}
 	products := [4]*big.Rat{
 		new(big.Rat).Mul(a.Min, b.Min),
 		new(big.Rat).Mul(a.Min, b.Max),
@@ -300,6 +374,21 @@ func valMul(a, b *Value) *Value {
 }
 
 func valDiv(a, b *Value) (*Value, error) {
+	ap, bp := discretePoints(a), discretePoints(b)
+	if ap != nil && bp != nil {
+		var out []*big.Rat
+		for _, x := range ap {
+			for _, y := range bp {
+				if y.Sign() == 0 {
+					return nil, fmt.Errorf("division by zero")
+				}
+				out = append(out, new(big.Rat).Quo(new(big.Rat).Set(x), y))
+			}
+		}
+		if len(out) <= maxDiscretePoints {
+			return DiscreteValue(out), nil
+		}
+	}
 	if b.Min.Sign() <= 0 && b.Max.Sign() >= 0 {
 		return nil, fmt.Errorf("division by interval containing zero")
 	}
@@ -314,11 +403,34 @@ func valPow(base *Value, n int64) (*Value, error) {
 	if n == 0 {
 		return PointValue(new(big.Rat).SetInt64(1)), nil
 	}
+	if base.Points != nil {
+		neg := n < 0
+		absN := n
+		if neg {
+			absN = -absN
+		}
+		var out []*big.Rat
+		for _, p := range base.Points {
+			r, err := ratPow(p, absN)
+			if err != nil {
+				return nil, err
+			}
+			if neg {
+				if r.Sign() == 0 {
+					return nil, fmt.Errorf("0^negative is undefined")
+				}
+				r.Inv(r)
+			}
+			out = append(out, r)
+		}
+		if len(out) <= maxDiscretePoints {
+			return DiscreteValue(out), nil
+		}
+	}
 	neg := n < 0
 	if neg {
 		n = -n
 	}
-
 	loP, err := ratPow(base.Min, n)
 	if err != nil {
 		return nil, err

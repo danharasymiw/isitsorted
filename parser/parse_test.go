@@ -89,7 +89,7 @@ func TestParseValue(t *testing.T) {
 		{"unary plus", "+5", rat("5"), false},
 		{"division by zero", "1/0", nil, true},
 		{"non-integer exponent", "2^1.5", nil, true},
-		{"negative power spanning zero", "(2±5)^-1", nil, true},
+		{"negative power with zero in set", "(5±5)^-1", nil, true},
 
 		// Emoji digits
 		{"emoji single", "3️⃣", rat("3"), false},
@@ -185,8 +185,8 @@ func TestParseValueRanges(t *testing.T) {
 		{"neg uncertainty", "-(10±1)", rat("-11"), rat("-9"), false},
 		{"uncertainty squared", "(10±1)^2", rat("81"), rat("121"), false},
 
-		// Range spanning zero with even power
-		{"span zero squared", "(0±2)^2", rat("0"), rat("4"), false},
+		// Discrete {-2, 2} squared: both give 4
+		{"span zero squared", "(0±2)^2", rat("4"), rat("4"), false},
 
 		// Interval notation
 		{"closed interval dots", "[9..11]", rat("9"), rat("11"), false},

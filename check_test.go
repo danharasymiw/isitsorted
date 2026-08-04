@@ -76,44 +76,46 @@ func TestCheck(t *testing.T) {
 }
 
 func TestCheckRanges(t *testing.T) {
-	v := func(min, max int64) *parser.Value {
+	interval := func(min, max int64) *parser.Value {
 		return &parser.Value{
 			Min: new(big.Rat).SetInt64(min),
 			Max: new(big.Rat).SetInt64(max),
 		}
 	}
+	discrete := func(vals ...int64) *parser.Value {
+		pts := make([]*big.Rat, len(vals))
+		for i, v := range vals {
+			pts[i] = new(big.Rat).SetInt64(v)
+		}
+		return parser.DiscreteValue(pts)
+	}
+	pt := func(n int64) *parser.Value {
+		return parser.PointValue(new(big.Rat).SetInt64(n))
+	}
+
 	tests := []struct {
 		name  string
 		list  []*parser.Value
 		order string
 		want  bool
 	}{
-		{"range between points asc", []*parser.Value{
-			parser.PointValue(new(big.Rat).SetInt64(7)),
-			v(8, 12),
-			parser.PointValue(new(big.Rat).SetInt64(15)),
-		}, "asc", true},
-		{"range overlaps prev asc", []*parser.Value{
-			parser.PointValue(new(big.Rat).SetInt64(9)),
-			v(8, 12),
-			parser.PointValue(new(big.Rat).SetInt64(15)),
-		}, "asc", false},
-		{"range overlaps next asc", []*parser.Value{
-			parser.PointValue(new(big.Rat).SetInt64(7)),
-			v(8, 12),
-			parser.PointValue(new(big.Rat).SetInt64(11)),
-		}, "asc", false},
-		{"overlapping ranges asc", []*parser.Value{v(8, 12), v(5, 15)}, "asc", false},
-		{"range between points desc", []*parser.Value{
-			parser.PointValue(new(big.Rat).SetInt64(15)),
-			v(8, 12),
-			parser.PointValue(new(big.Rat).SetInt64(7)),
-		}, "desc", true},
-		{"range overlaps next desc", []*parser.Value{
-			parser.PointValue(new(big.Rat).SetInt64(15)),
-			v(8, 12),
-			parser.PointValue(new(big.Rat).SetInt64(9)),
-		}, "desc", false},
+		// Continuous ranges use forall semantics
+		{"interval between points asc", []*parser.Value{pt(7), interval(8, 12), pt(15)}, "asc", true},
+		{"interval overlaps prev asc", []*parser.Value{pt(9), interval(8, 12), pt(15)}, "asc", false},
+		{"interval overlaps next asc", []*parser.Value{pt(7), interval(8, 12), pt(11)}, "asc", false},
+		{"overlapping intervals asc", []*parser.Value{interval(8, 12), interval(5, 15)}, "asc", false},
+		{"interval between points desc", []*parser.Value{pt(15), interval(8, 12), pt(7)}, "desc", true},
+		{"interval overlaps next desc", []*parser.Value{pt(15), interval(8, 12), pt(9)}, "desc", false},
+
+		// Discrete sets use exists semantics (pick best value)
+		{"discrete can pick lower asc", []*parser.Value{discrete(9, 11), pt(9)}, "asc", true},
+		{"discrete pick fits between asc", []*parser.Value{pt(7), discrete(8, 12), pt(15)}, "asc", true},
+		{"discrete no valid pick asc", []*parser.Value{pt(9), discrete(8, 12), pt(11)}, "asc", false},
+		{"discrete overlapping sets asc", []*parser.Value{discrete(8, 12), discrete(5, 15)}, "asc", true},
+		{"discrete all below prev asc", []*parser.Value{pt(15), discrete(8, 12)}, "asc", false},
+		{"discrete can pick higher desc", []*parser.Value{discrete(9, 11), pt(11)}, "desc", true},
+		{"discrete between points desc", []*parser.Value{pt(15), discrete(8, 12), pt(7)}, "desc", true},
+		{"discrete no valid pick desc", []*parser.Value{pt(11), discrete(8, 12), pt(9)}, "desc", false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
