@@ -6,7 +6,8 @@
 *.so.*
 *.dylib
 sorted
-*superpowers
+.superpowers
+docs/superpowers
 
 # Test binary, built with `go test -c`
 *.test
