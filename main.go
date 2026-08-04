@@ -23,7 +23,7 @@ func newServer(rl *rateLimiter, ctr *counter, act *activityLog) http.Handler {
 	mux.Handle("GET /count/not-sorted", notSortedCountHandler(ctr))
 	mux.Handle("GET /activity", activityHandler(act))
 	mux.Handle("POST /async/is-sorted", rl.middleware(asyncSubmitHandler(js, ctr, act)))
-	mux.HandleFunc("GET /async/is-sorted/{id}", asyncStatusHandler(js))
+	mux.Handle("GET /async/is-sorted/{id}", asyncStatusHandler(js))
 	sub, _ := fs.Sub(staticFS, "static")
 	mux.Handle("GET /", http.FileServer(http.FS(sub)))
 	return mux
