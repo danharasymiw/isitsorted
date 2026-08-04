@@ -89,6 +89,7 @@ func TestParseValue(t *testing.T) {
 		{"unary plus", "+5", rat("5"), false},
 		{"division by zero", "1/0", nil, true},
 		{"non-integer exponent", "2^1.5", nil, true},
+		{"negative power spanning zero", "(2±5)^-1", nil, true},
 
 		// Emoji digits
 		{"emoji single", "3️⃣", rat("3"), false},

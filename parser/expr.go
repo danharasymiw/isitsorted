@@ -345,7 +345,7 @@ func valPow(base *Value, n int64) (*Value, error) {
 	}
 
 	if neg {
-		if result.Min.Sign() == 0 || result.Max.Sign() == 0 {
+		if result.Min.Sign() <= 0 && result.Max.Sign() >= 0 {
 			return nil, fmt.Errorf("0^negative is undefined")
 		}
 		result = &Value{
