@@ -36,6 +36,10 @@ body {
   font-weight: 700;
   color: #0f172a;
   letter-spacing: -0.5px;
+  text-decoration: none;
+}
+.status-brand:hover {
+  color: #4f46e5;
 }
 
 /* Hero */
