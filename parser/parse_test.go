@@ -187,6 +187,15 @@ func TestParseValueRanges(t *testing.T) {
 
 		// Range spanning zero with even power
 		{"span zero squared", "(0±2)^2", rat("0"), rat("4"), false},
+
+		// Interval notation
+		{"closed interval dots", "[9..11]", rat("9"), rat("11"), false},
+		{"open interval dots", "(9..11)", rat("9"), rat("11"), false},
+		{"mixed interval [)", "[9..11)", rat("9"), rat("11"), false},
+		{"mixed interval (]", "(9..11]", rat("9"), rat("11"), false},
+		{"closed interval comma", "[9, 11]", rat("9"), rat("11"), false},
+		{"interval with floats", "[1.5..3.5]", rat("3/2"), rat("7/2"), false},
+		{"interval with negatives", "[-5..5]", rat("-5"), rat("5"), false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

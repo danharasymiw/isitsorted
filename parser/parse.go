@@ -106,6 +106,10 @@ func ParseValue(s string) (*Value, error) {
 		return PointValue(v), nil
 	}
 
+	if v, ok := parseInterval(s); ok {
+		return v, nil
+	}
+
 	if v, err := parseExprString(s); err == nil {
 		return v, nil
 	}
