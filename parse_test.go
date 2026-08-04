@@ -109,6 +109,13 @@ func TestParseValue(t *testing.T) {
 		{"roman nulla", "nulla", rat("0"), false},
 		{"roman vinculum", "X̅", rat("10000"), false},
 
+		// Braille numbers
+		{"braille 1", "⠼⠁", rat("1"), false},
+		{"braille 42", "⠼⠙⠃", rat("42"), false},
+		{"braille bare", "⠁⠃", rat("12"), false},
+		{"braille negative", "⠤⠼⠑", rat("-5"), false},
+		{"braille decimal", "⠼⠉⠲⠁⠙", rat("314/100"), false},
+
 		// Errors
 		{"empty", "", nil, true},
 		{"garbage", "banana", nil, true},
