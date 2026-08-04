@@ -160,6 +160,57 @@ func TestConstantsAscending(t *testing.T) {
 	}
 }
 
+func TestParseValueRanges(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantMin *big.Rat
+		wantMax *big.Rat
+		wantErr bool
+	}{
+		// Basic uncertainty
+		{"10±1", "10±1", rat("9"), rat("11"), false},
+		{"10±2", "10±2", rat("8"), rat("12"), false},
+		{"0±5", "0±5", rat("-5"), rat("5"), false},
+
+		// +/- alias
+		{"10+/-1", "10+/-1", rat("9"), rat("11"), false},
+
+		// Uncertainty in expressions
+		{"(10±1)*2", "(10±1)*2", rat("18"), rat("22"), false},
+		{"(10±2)+3", "(10±2)+3", rat("11"), rat("15"), false},
+		{"5+10±2", "5+10±2", rat("13"), rat("17"), false},
+
+		// Arithmetic with ranges
+		{"neg uncertainty", "-(10±1)", rat("-11"), rat("-9"), false},
+		{"uncertainty squared", "(10±1)^2", rat("81"), rat("121"), false},
+
+		// Range spanning zero with even power
+		{"span zero squared", "(0±2)^2", rat("0"), rat("4"), false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := ParseValue(tc.input)
+			if tc.wantErr {
+				if err == nil {
+					t.Errorf("ParseValue(%q) = [%s..%s], want error", tc.input,
+						got.Min.RatString(), got.Max.RatString())
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("ParseValue(%q) error: %v", tc.input, err)
+			}
+			if got.Min.Cmp(tc.wantMin) != 0 || got.Max.Cmp(tc.wantMax) != 0 {
+				t.Errorf("ParseValue(%q) = [%s..%s], want [%s..%s]",
+					tc.input,
+					got.Min.RatString(), got.Max.RatString(),
+					tc.wantMin.RatString(), tc.wantMax.RatString())
+			}
+		})
+	}
+}
+
 func TestFormatRat(t *testing.T) {
 	tests := []struct {
 		input *big.Rat
