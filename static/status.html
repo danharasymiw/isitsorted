@@ -28,7 +28,7 @@
 
     <section class="status-uptime">
       <h2>Uptime</h2>
-      {{range $idx, $comp := (slice (mkSlice "Sort Checker" "Async API" "Counter" "Activity Feed" "Website") 0 5)}}
+      {{range $comp := (mkSlice "Sort Checker" "Async API" "Counter" "Activity Feed" "Website")}}
       <div class="uptime-row">
         <div class="uptime-label">{{$comp}}</div>
         <div class="uptime-bar">
