@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"math/big"
@@ -124,18 +124,18 @@ func TestParseValue(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := parseValue(tc.input)
+			got, err := ParseValue(tc.input)
 			if tc.wantErr {
 				if err == nil {
-					t.Errorf("parseValue(%q) = %v, want error", tc.input, got)
+					t.Errorf("ParseValue(%q) = %v, want error", tc.input, got)
 				}
 				return
 			}
 			if err != nil {
-				t.Fatalf("parseValue(%q) error: %v", tc.input, err)
+				t.Fatalf("ParseValue(%q) error: %v", tc.input, err)
 			}
 			if got.Cmp(tc.want) != 0 {
-				t.Errorf("parseValue(%q) = %s, want %s", tc.input, got.RatString(), tc.want.RatString())
+				t.Errorf("ParseValue(%q) = %s, want %s", tc.input, got.RatString(), tc.want.RatString())
 			}
 		})
 	}
@@ -146,14 +146,17 @@ func TestConstantsAscending(t *testing.T) {
 	inputs := []string{"ζ(3)", "φ", "e", "π", "τ"}
 	var list []*big.Rat
 	for _, s := range inputs {
-		v, err := parseValue(s)
+		v, err := ParseValue(s)
 		if err != nil {
-			t.Fatalf("parseValue(%q): %v", s, err)
+			t.Fatalf("ParseValue(%q): %v", s, err)
 		}
 		list = append(list, v)
 	}
-	if !check(list, "asc") {
-		t.Errorf("expected [ζ(3), φ, e, π, τ] to be sorted ascending")
+	for i := 1; i < len(list); i++ {
+		if list[i].Cmp(list[i-1]) < 0 {
+			t.Errorf("expected [ζ(3), φ, e, π, τ] to be sorted ascending")
+			break
+		}
 	}
 }
 
@@ -170,9 +173,9 @@ func TestFormatRat(t *testing.T) {
 		{rat("99999999999999999999"), "99999999999999999999"},
 	}
 	for _, tc := range tests {
-		got := formatRat(tc.input)
+		got := FormatRat(tc.input)
 		if got != tc.want {
-			t.Errorf("formatRat(%s) = %q, want %q", tc.input.RatString(), got, tc.want)
+			t.Errorf("FormatRat(%s) = %q, want %q", tc.input.RatString(), got, tc.want)
 		}
 	}
 }

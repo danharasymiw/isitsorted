@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"math/big"
@@ -109,18 +109,18 @@ func TestParseValueMultiLang(t *testing.T) {
 		input string
 		want  *big.Rat
 	}{
-		{"german via parseValue", "eins", rat("1")},
-		{"spanish via parseValue", "dos", rat("2")},
-		{"korean via parseValue", "삼", rat("3")},
+		{"german via ParseValue", "eins", rat("1")},
+		{"spanish via ParseValue", "dos", rat("2")},
+		{"korean via ParseValue", "삼", rat("3")},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := parseValue(tc.input)
+			got, err := ParseValue(tc.input)
 			if err != nil {
-				t.Fatalf("parseValue(%q) error: %v", tc.input, err)
+				t.Fatalf("ParseValue(%q) error: %v", tc.input, err)
 			}
 			if got.Cmp(tc.want) != 0 {
-				t.Errorf("parseValue(%q) = %s, want %s", tc.input, got.RatString(), tc.want.RatString())
+				t.Errorf("ParseValue(%q) = %s, want %s", tc.input, got.RatString(), tc.want.RatString())
 			}
 		})
 	}

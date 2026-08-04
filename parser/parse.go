@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"fmt"
@@ -56,7 +56,7 @@ func normalizeEmoji(s string) string {
 	return b.String()
 }
 
-func parseValue(s string) (*big.Rat, error) {
+func ParseValue(s string) (*big.Rat, error) {
 	s = strings.TrimSpace(s)
 	s = normalizeEmoji(s)
 	if s == "" {
@@ -126,7 +126,7 @@ func parseConstant(s string) (*big.Rat, bool) {
 	return v, true
 }
 
-func formatRat(r *big.Rat) string {
+func FormatRat(r *big.Rat) string {
 	if r.IsInt() {
 		return r.Num().String()
 	}
