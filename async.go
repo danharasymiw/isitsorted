@@ -2,10 +2,8 @@ package main
 
 import (
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"sorted/parser"
 	"sync"
 	"time"
 )
@@ -71,37 +69,13 @@ func asyncSubmitHandler(js *jobStore, ctr *counter, act *activityLog) http.Handl
 	return func(w http.ResponseWriter, r *http.Request) {
 		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
-		var req sortRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		list, rawList, order, err := parseJSONBody(r)
+		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}
-		if req.List == nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "list is required"})
-			return
-		}
-		if req.Order == "" {
-			req.Order = "asc"
-		}
-		if req.Order != "asc" && req.Order != "desc" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": `order must be "asc" or "desc"`})
-			return
-		}
-
-		list := make([]*parser.Value, 0, len(req.List))
-		rawList := make([]string, 0, len(req.List))
-		for _, raw := range req.List {
-			v, err := parseRaw(raw)
-			if err != nil {
-				writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-				return
-			}
-			list = append(list, v)
-			rawList = append(rawList, string(raw))
-		}
 
 		j := js.create(newUUID())
-		order := req.Order
 
 		go func() {
 			sorted := check(list, order)

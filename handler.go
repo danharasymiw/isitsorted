@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sorted/parser"
 	"strings"
@@ -49,39 +50,48 @@ func isSortedHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 	}
 }
 
-func handleJSON(w http.ResponseWriter, r *http.Request, ctr *counter, act *activityLog) {
+// parseJSONBody decodes a sortRequest from the request body and validates
+// it, returning the parsed values, their raw string forms, and the sort
+// order to use.
+func parseJSONBody(r *http.Request) (list []*parser.Value, rawList []string, order string, err error) {
 	var req sortRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
+		return nil, nil, "", err
 	}
 	if req.List == nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "list is required"})
-		return
+		return nil, nil, "", fmt.Errorf("list is required")
 	}
-	if req.Order == "" {
-		req.Order = "asc"
+	order = req.Order
+	if order == "" {
+		order = "asc"
 	}
-	if req.Order != "asc" && req.Order != "desc" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": `order must be "asc" or "desc"`})
-		return
+	if order != "asc" && order != "desc" {
+		return nil, nil, "", fmt.Errorf(`order must be "asc" or "desc"`)
 	}
 
-	list := make([]*parser.Value, 0, len(req.List))
-	rawList := make([]string, 0, len(req.List))
+	list = make([]*parser.Value, 0, len(req.List))
+	rawList = make([]string, 0, len(req.List))
 	for _, raw := range req.List {
 		v, err := parseRaw(raw)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-			return
+			return nil, nil, "", err
 		}
 		list = append(list, v)
 		rawList = append(rawList, strings.TrimSpace(string(raw)))
 	}
+	return list, rawList, order, nil
+}
 
-	sorted := check(list, req.Order)
+func handleJSON(w http.ResponseWriter, r *http.Request, ctr *counter, act *activityLog) {
+	list, rawList, order, err := parseJSONBody(r)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+
+	sorted := check(list, order)
 	ctr.increment(sorted)
-	act.add(sorted, req.Order, rawList)
+	act.add(sorted, order, rawList)
 	writeJSON(w, http.StatusOK, map[string]bool{"sorted": sorted})
 }
 
