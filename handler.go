@@ -97,7 +97,7 @@ func checkFormHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 		lines := strings.FieldsFunc(raw, func(c rune) bool { return c == '\n' || c == '\r' })
 		var tokens []string
 		for _, line := range lines {
-			fields := strings.Split(line, ",")
+			fields := parser.SplitBracketAware(line, ',')
 			// Drop trailing empty field from a trailing comma.
 			if len(fields) > 0 && strings.TrimSpace(fields[len(fields)-1]) == "" {
 				fields = fields[:len(fields)-1]

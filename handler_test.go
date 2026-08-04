@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -151,6 +153,54 @@ func TestIsSortedHandler(t *testing.T) {
 		resp, _ := http.Post(strictSrv.URL+"/is-sorted", "application/json", strings.NewReader(`{"list":[1,2]}`))
 		if resp.StatusCode != 429 {
 			t.Fatalf("want 429, got %d", resp.StatusCode)
+		}
+	})
+}
+
+func TestCheckFormHandler(t *testing.T) {
+	rl := newRateLimiter(100, time.Minute)
+	srv := httptest.NewServer(newServer(rl, &counter{}, newActivityLog(20, "")))
+	defer srv.Close()
+
+	t.Run("uncertainty via form", func(t *testing.T) {
+		resp, err := http.PostForm(srv.URL+"/check", url.Values{
+			"list":  {"7\n10±2\n15"},
+			"order": {"asc"},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		if !strings.Contains(string(body), "Yes") {
+			t.Errorf("expected sorted, got: %s", body)
+		}
+	})
+
+	t.Run("finite set via form", func(t *testing.T) {
+		resp, err := http.PostForm(srv.URL+"/check", url.Values{
+			"list":  {"{1, 3, 7}, 10, 15"},
+			"order": {"asc"},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		if !strings.Contains(string(body), "Yes") {
+			t.Errorf("expected sorted, got: %s", body)
+		}
+	})
+
+	t.Run("overlapping ranges not sorted", func(t *testing.T) {
+		resp, err := http.PostForm(srv.URL+"/check", url.Values{
+			"list":  {"10±2, 10±5"},
+			"order": {"asc"},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		if !strings.Contains(string(body), "No") {
+			t.Errorf("expected not sorted, got: %s", body)
 		}
 	})
 }
