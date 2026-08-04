@@ -56,7 +56,24 @@ func normalizeEmoji(s string) string {
 	return b.String()
 }
 
-func ParseValue(s string) (*big.Rat, error) {
+// Value represents a parsed value, which may be an exact point or a range
+// (e.g. from "±" uncertainty notation).
+type Value struct {
+	Min *big.Rat
+	Max *big.Rat
+}
+
+// PointValue wraps a single *big.Rat as an exact (zero-width) Value.
+func PointValue(r *big.Rat) *Value {
+	return &Value{Min: r, Max: r}
+}
+
+// IsPoint reports whether the value is an exact point (Min == Max).
+func (v *Value) IsPoint() bool {
+	return v.Min.Cmp(v.Max) == 0
+}
+
+func ParseValue(s string) (*Value, error) {
 	s = strings.TrimSpace(s)
 	s = normalizeEmoji(s)
 	if s == "" {
@@ -65,28 +82,28 @@ func ParseValue(s string) (*big.Rat, error) {
 
 	r := new(big.Rat)
 	if _, ok := r.SetString(s); ok {
-		return r, nil
+		return PointValue(r), nil
 	}
 
 	if n, ok := new(big.Int).SetString(s, 0); ok {
-		return new(big.Rat).SetInt(n), nil
+		return PointValue(new(big.Rat).SetInt(n)), nil
 	}
 
 	if f, ok := new(big.Float).SetPrec(256).SetString(s); ok {
 		rat, _ := f.Rat(nil)
-		return rat, nil
+		return PointValue(rat), nil
 	}
 
 	if v, ok := parseConstant(s); ok {
-		return v, nil
+		return PointValue(v), nil
 	}
 
 	if v, ok := parseRoman(s); ok {
-		return v, nil
+		return PointValue(v), nil
 	}
 
 	if v, ok := parseBraille(s); ok {
-		return v, nil
+		return PointValue(v), nil
 	}
 
 	if v, err := parseExprString(s); err == nil {
@@ -94,7 +111,7 @@ func ParseValue(s string) (*big.Rat, error) {
 	}
 
 	if n, err := parseMultiLang(s); err == nil {
-		return new(big.Rat).SetInt(n), nil
+		return PointValue(new(big.Rat).SetInt(n)), nil
 	}
 
 	return nil, fmt.Errorf("cannot parse %q as a number", s)
@@ -134,4 +151,19 @@ func FormatRat(r *big.Rat) string {
 	s = strings.TrimRight(s, "0")
 	s = strings.TrimRight(s, ".")
 	return s
+}
+
+// FormatValue renders a Value for display: a plain number for point values,
+// "center±delta" for symmetric ranges, or "[min..max]" for asymmetric ranges.
+func FormatValue(v *Value) string {
+	if v.IsPoint() {
+		return FormatRat(v.Min)
+	}
+	sum := new(big.Rat).Add(v.Min, v.Max)
+	center := new(big.Rat).Mul(sum, new(big.Rat).SetFrac64(1, 2))
+	delta := new(big.Rat).Sub(v.Max, center)
+	if delta.Sign() > 0 {
+		return FormatRat(center) + "±" + FormatRat(delta)
+	}
+	return "[" + FormatRat(v.Min) + ".." + FormatRat(v.Max) + "]"
 }

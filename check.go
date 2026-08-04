@@ -1,16 +1,15 @@
 package main
 
-import "math/big"
+import "sorted/parser"
 
-func check(list []*big.Rat, order string) bool {
+func check(list []*parser.Value, order string) bool {
 	for i := 1; i < len(list); i++ {
-		cmp := list[i].Cmp(list[i-1])
 		if order == "desc" {
-			if cmp > 0 {
+			if list[i].Max.Cmp(list[i-1].Min) > 0 {
 				return false
 			}
 		} else {
-			if cmp < 0 {
+			if list[i].Min.Cmp(list[i-1].Max) < 0 {
 				return false
 			}
 		}

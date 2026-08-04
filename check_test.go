@@ -2,13 +2,14 @@ package main
 
 import (
 	"math/big"
+	"sorted/parser"
 	"testing"
 )
 
-func ints(ns ...int64) []*big.Rat {
-	out := make([]*big.Rat, len(ns))
+func ints(ns ...int64) []*parser.Value {
+	out := make([]*parser.Value, len(ns))
 	for i, n := range ns {
-		out[i] = new(big.Rat).SetInt64(n)
+		out[i] = parser.PointValue(new(big.Rat).SetInt64(n))
 	}
 	return out
 }
@@ -16,7 +17,7 @@ func ints(ns ...int64) []*big.Rat {
 func TestCheck(t *testing.T) {
 	tests := []struct {
 		name  string
-		list  []*big.Rat
+		list  []*parser.Value
 		order string
 		want  bool
 	}{
@@ -33,22 +34,22 @@ func TestCheck(t *testing.T) {
 	}
 
 	// Float cases.
-	half := new(big.Rat).SetFloat64(0.5)
-	onePointFive := new(big.Rat).SetFloat64(1.5)
-	twoPointFive := new(big.Rat).SetFloat64(2.5)
+	half := parser.PointValue(new(big.Rat).SetFloat64(0.5))
+	onePointFive := parser.PointValue(new(big.Rat).SetFloat64(1.5))
+	twoPointFive := parser.PointValue(new(big.Rat).SetFloat64(2.5))
 	tests = append(tests,
 		struct {
 			name  string
-			list  []*big.Rat
+			list  []*parser.Value
 			order string
 			want  bool
-		}{"floats sorted", []*big.Rat{half, onePointFive, twoPointFive}, "asc", true},
+		}{"floats sorted", []*parser.Value{half, onePointFive, twoPointFive}, "asc", true},
 		struct {
 			name  string
-			list  []*big.Rat
+			list  []*parser.Value
 			order string
 			want  bool
-		}{"floats unsorted", []*big.Rat{onePointFive, half, twoPointFive}, "asc", false},
+		}{"floats unsorted", []*parser.Value{onePointFive, half, twoPointFive}, "asc", false},
 	)
 
 	// Big integer case.
@@ -58,10 +59,10 @@ func TestCheck(t *testing.T) {
 	tests = append(tests,
 		struct {
 			name  string
-			list  []*big.Rat
+			list  []*parser.Value
 			order string
 			want  bool
-		}{"big ints sorted", []*big.Rat{a, b, c}, "asc", true},
+		}{"big ints sorted", []*parser.Value{parser.PointValue(a), parser.PointValue(b), parser.PointValue(c)}, "asc", true},
 	)
 
 	for _, tc := range tests {
@@ -69,6 +70,56 @@ func TestCheck(t *testing.T) {
 			got := check(tc.list, tc.order)
 			if got != tc.want {
 				t.Errorf("check(%v, %q) = %v, want %v", tc.list, tc.order, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestCheckRanges(t *testing.T) {
+	v := func(min, max int64) *parser.Value {
+		return &parser.Value{
+			Min: new(big.Rat).SetInt64(min),
+			Max: new(big.Rat).SetInt64(max),
+		}
+	}
+	tests := []struct {
+		name  string
+		list  []*parser.Value
+		order string
+		want  bool
+	}{
+		{"range between points asc", []*parser.Value{
+			parser.PointValue(new(big.Rat).SetInt64(7)),
+			v(8, 12),
+			parser.PointValue(new(big.Rat).SetInt64(15)),
+		}, "asc", true},
+		{"range overlaps prev asc", []*parser.Value{
+			parser.PointValue(new(big.Rat).SetInt64(9)),
+			v(8, 12),
+			parser.PointValue(new(big.Rat).SetInt64(15)),
+		}, "asc", false},
+		{"range overlaps next asc", []*parser.Value{
+			parser.PointValue(new(big.Rat).SetInt64(7)),
+			v(8, 12),
+			parser.PointValue(new(big.Rat).SetInt64(11)),
+		}, "asc", false},
+		{"overlapping ranges asc", []*parser.Value{v(8, 12), v(5, 15)}, "asc", false},
+		{"range between points desc", []*parser.Value{
+			parser.PointValue(new(big.Rat).SetInt64(15)),
+			v(8, 12),
+			parser.PointValue(new(big.Rat).SetInt64(7)),
+		}, "desc", true},
+		{"range overlaps next desc", []*parser.Value{
+			parser.PointValue(new(big.Rat).SetInt64(15)),
+			v(8, 12),
+			parser.PointValue(new(big.Rat).SetInt64(9)),
+		}, "desc", false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := check(tc.list, tc.order)
+			if got != tc.want {
+				t.Errorf("check(..., %q) = %v, want %v", tc.order, got, tc.want)
 			}
 		})
 	}

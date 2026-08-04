@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"math/big"
 	"net/http"
 	"sorted/parser"
 	"strings"
@@ -19,8 +18,8 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	json.NewEncoder(w).Encode(v)
 }
 
-// parseRaw converts a single JSON value (number or string) to *big.Rat.
-func parseRaw(raw json.RawMessage) (*big.Rat, error) {
+// parseRaw converts a single JSON value (number or string) to *parser.Value.
+func parseRaw(raw json.RawMessage) (*parser.Value, error) {
 	s := strings.TrimSpace(string(raw))
 
 	// JSON string → unquote, then parse the inner text.
@@ -58,7 +57,7 @@ func isSortedHandler(ctr *counter) http.HandlerFunc {
 			return
 		}
 
-		list := make([]*big.Rat, 0, len(req.List))
+		list := make([]*parser.Value, 0, len(req.List))
 		for _, raw := range req.List {
 			v, err := parseRaw(raw)
 			if err != nil {
@@ -106,7 +105,7 @@ func checkFormHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 			tokens = append(tokens, fields...)
 		}
 
-		var list []*big.Rat
+		var list []*parser.Value
 		var rawList []string
 		for _, p := range tokens {
 			p = strings.TrimSpace(p)

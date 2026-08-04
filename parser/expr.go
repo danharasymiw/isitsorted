@@ -3,9 +3,9 @@ package parser
 import (
 	"fmt"
 	"math/big"
+	"strings"
 	"unicode"
 )
-
 
 type exprParser struct {
 	runes []rune
@@ -14,8 +14,10 @@ type exprParser struct {
 
 // parseExprString parses and evaluates an arithmetic expression.
 // Supports +, -, *, /, ^ (integer exponents ≤ 100), parentheses,
-// unary minus/plus, numeric literals, and named constants (pi, e, etc.).
-func parseExprString(s string) (*big.Rat, error) {
+// unary minus/plus, numeric literals, named constants (pi, e, etc.),
+// and "±" (or "+/-") uncertainty ranges.
+func parseExprString(s string) (*Value, error) {
+	s = strings.ReplaceAll(s, "+/-", "±")
 	p := &exprParser{runes: []rune(s)}
 	v, err := p.parseAddSub()
 	if err != nil {
@@ -42,8 +44,8 @@ func (p *exprParser) peek() (rune, bool) {
 	return p.runes[p.pos], true
 }
 
-// parseAddSub = parseMulDiv (('+' | '-') parseMulDiv)*
-func (p *exprParser) parseAddSub() (*big.Rat, error) {
+// parseAddSub = parseMulDiv (('+' | '-' | '±') parseMulDiv)*
+func (p *exprParser) parseAddSub() (*Value, error) {
 	left, err := p.parseMulDiv()
 	if err != nil {
 		return nil, err
@@ -60,18 +62,21 @@ func (p *exprParser) parseAddSub() (*big.Rat, error) {
 		}
 		switch ch {
 		case '+':
-			left = new(big.Rat).Add(left, right)
+			left = valAdd(left, right)
 		case '-':
-			left = new(big.Rat).Sub(left, right)
+			left = valSub(left, right)
 		case '±':
-			// ± denotes uncertainty — keep the nominal (left) value.
+			left = &Value{
+				Min: new(big.Rat).Sub(left.Min, right.Max),
+				Max: new(big.Rat).Add(left.Max, right.Max),
+			}
 		}
 	}
 	return left, nil
 }
 
 // parseMulDiv = parsePow (('*' | '/') parsePow)*
-func (p *exprParser) parseMulDiv() (*big.Rat, error) {
+func (p *exprParser) parseMulDiv() (*Value, error) {
 	left, err := p.parsePow()
 	if err != nil {
 		return nil, err
@@ -86,22 +91,23 @@ func (p *exprParser) parseMulDiv() (*big.Rat, error) {
 		if err != nil {
 			return nil, err
 		}
-		res := new(big.Rat)
 		if ch == '*' {
-			res.Mul(left, right)
+			left = valMul(left, right)
 		} else {
-			if right.Sign() == 0 {
+			if right.Min.Sign() <= 0 && right.Max.Sign() >= 0 {
 				return nil, fmt.Errorf("division by zero")
 			}
-			res.Quo(left, right)
+			left, err = valDiv(left, right)
+			if err != nil {
+				return nil, err
+			}
 		}
-		left = res
 	}
 	return left, nil
 }
 
 // parsePow = parseUnary ('^' parsePow)?  right-associative
-func (p *exprParser) parsePow() (*big.Rat, error) {
+func (p *exprParser) parsePow() (*Value, error) {
 	base, err := p.parseUnary()
 	if err != nil {
 		return nil, err
@@ -115,14 +121,17 @@ func (p *exprParser) parsePow() (*big.Rat, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !exp.IsInt() {
-		return nil, fmt.Errorf("exponent must be an integer, got %s", exp.RatString())
+	if !exp.IsPoint() {
+		return nil, fmt.Errorf("exponent must be a point value")
 	}
-	expNum := exp.Num()
+	if !exp.Min.IsInt() {
+		return nil, fmt.Errorf("exponent must be an integer, got %s", exp.Min.RatString())
+	}
+	expNum := exp.Min.Num()
 	if !expNum.IsInt64() {
 		return nil, fmt.Errorf("exponent must fit in int64")
 	}
-	return ratPow(base, expNum.Int64())
+	return valPow(base, expNum.Int64())
 }
 
 func ratPow(base *big.Rat, n int64) (*big.Rat, error) {
@@ -147,7 +156,7 @@ func ratPow(base *big.Rat, n int64) (*big.Rat, error) {
 }
 
 // parseUnary = ('+' | '-') parseUnary | parsePrimary
-func (p *exprParser) parseUnary() (*big.Rat, error) {
+func (p *exprParser) parseUnary() (*Value, error) {
 	ch, ok := p.peek()
 	if !ok {
 		return nil, fmt.Errorf("unexpected end of expression")
@@ -158,7 +167,7 @@ func (p *exprParser) parseUnary() (*big.Rat, error) {
 		if err != nil {
 			return nil, err
 		}
-		return new(big.Rat).Neg(v), nil
+		return valNeg(v), nil
 	}
 	if ch == '+' {
 		p.pos++
@@ -168,7 +177,7 @@ func (p *exprParser) parseUnary() (*big.Rat, error) {
 }
 
 // parsePrimary = '(' parseAddSub ')' | atom
-func (p *exprParser) parsePrimary() (*big.Rat, error) {
+func (p *exprParser) parsePrimary() (*Value, error) {
 	ch, ok := p.peek()
 	if !ok {
 		return nil, fmt.Errorf("unexpected end of expression")
@@ -192,7 +201,7 @@ func (p *exprParser) parsePrimary() (*big.Rat, error) {
 // parseAtom reads a numeric literal or named constant.
 // Word-numbers (e.g. "forty-two") are not supported inside expressions —
 // they must be the entire input and are handled by parseValue's fallback.
-func (p *exprParser) parseAtom() (*big.Rat, error) {
+func (p *exprParser) parseAtom() (*Value, error) {
 	p.skipWS()
 	if p.pos >= len(p.runes) {
 		return nil, fmt.Errorf("expected a number")
@@ -225,7 +234,7 @@ func (p *exprParser) parseAtom() (*big.Rat, error) {
 		if !ok {
 			return nil, fmt.Errorf("unknown constant %q", name)
 		}
-		return v, nil
+		return PointValue(v), nil
 	}
 
 	// Digit or '.' → numeric literal (int, decimal, or rational a/b)
@@ -244,8 +253,105 @@ func (p *exprParser) parseAtom() (*big.Rat, error) {
 		if _, ok := r.SetString(s); !ok {
 			return nil, fmt.Errorf("invalid number %q", s)
 		}
-		return r, nil
+		return PointValue(r), nil
 	}
 
 	return nil, fmt.Errorf("unexpected %q", ch)
+}
+
+func valAdd(a, b *Value) *Value {
+	return &Value{
+		Min: new(big.Rat).Add(a.Min, b.Min),
+		Max: new(big.Rat).Add(a.Max, b.Max),
+	}
+}
+
+func valSub(a, b *Value) *Value {
+	return &Value{
+		Min: new(big.Rat).Sub(a.Min, b.Max),
+		Max: new(big.Rat).Sub(a.Max, b.Min),
+	}
+}
+
+func valNeg(a *Value) *Value {
+	return &Value{
+		Min: new(big.Rat).Neg(a.Max),
+		Max: new(big.Rat).Neg(a.Min),
+	}
+}
+
+func valMul(a, b *Value) *Value {
+	products := [4]*big.Rat{
+		new(big.Rat).Mul(a.Min, b.Min),
+		new(big.Rat).Mul(a.Min, b.Max),
+		new(big.Rat).Mul(a.Max, b.Min),
+		new(big.Rat).Mul(a.Max, b.Max),
+	}
+	lo, hi := products[0], products[0]
+	for _, p := range products[1:] {
+		if p.Cmp(lo) < 0 {
+			lo = p
+		}
+		if p.Cmp(hi) > 0 {
+			hi = p
+		}
+	}
+	return &Value{Min: lo, Max: hi}
+}
+
+func valDiv(a, b *Value) (*Value, error) {
+	if b.Min.Sign() <= 0 && b.Max.Sign() >= 0 {
+		return nil, fmt.Errorf("division by interval containing zero")
+	}
+	inv := &Value{
+		Min: new(big.Rat).Inv(new(big.Rat).Set(b.Max)),
+		Max: new(big.Rat).Inv(new(big.Rat).Set(b.Min)),
+	}
+	return valMul(a, inv), nil
+}
+
+func valPow(base *Value, n int64) (*Value, error) {
+	if n == 0 {
+		return PointValue(new(big.Rat).SetInt64(1)), nil
+	}
+	neg := n < 0
+	if neg {
+		n = -n
+	}
+
+	loP, err := ratPow(base.Min, n)
+	if err != nil {
+		return nil, err
+	}
+	hiP, err := ratPow(base.Max, n)
+	if err != nil {
+		return nil, err
+	}
+
+	var result *Value
+	if n%2 == 0 && base.Min.Sign() < 0 && base.Max.Sign() > 0 {
+		zero := new(big.Rat)
+		hi := loP
+		if hiP.Cmp(hi) > 0 {
+			hi = hiP
+		}
+		result = &Value{Min: zero, Max: hi}
+	} else {
+		lo, hi := loP, hiP
+		if lo.Cmp(hi) > 0 {
+			lo, hi = hi, lo
+		}
+		result = &Value{Min: lo, Max: hi}
+	}
+
+	if neg {
+		if result.Min.Sign() == 0 || result.Max.Sign() == 0 {
+			return nil, fmt.Errorf("0^negative is undefined")
+		}
+		result = &Value{
+			Min: new(big.Rat).Inv(result.Max),
+			Max: new(big.Rat).Inv(result.Min),
+		}
+	}
+	return result, nil
 }

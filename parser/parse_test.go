@@ -87,8 +87,6 @@ func TestParseValue(t *testing.T) {
 		{"nested parens", "((2+3))", rat("5"), false},
 		{"expr with constant", "pi*2", rat("628318530717958647692/100000000000000000000"), false},
 		{"unary plus", "+5", rat("5"), false},
-		{"plus-minus nominal", "1±2", rat("1"), false},
-		{"plus-minus in expr", "3+1±0.5", rat("4"), false},
 		{"division by zero", "1/0", nil, true},
 		{"non-integer exponent", "2^1.5", nil, true},
 
@@ -134,8 +132,9 @@ func TestParseValue(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseValue(%q) error: %v", tc.input, err)
 			}
-			if got.Cmp(tc.want) != 0 {
-				t.Errorf("ParseValue(%q) = %s, want %s", tc.input, got.RatString(), tc.want.RatString())
+			if got.Min.Cmp(tc.want) != 0 || got.Max.Cmp(tc.want) != 0 {
+				t.Errorf("ParseValue(%q) = [%s..%s], want %s",
+					tc.input, got.Min.RatString(), got.Max.RatString(), tc.want.RatString())
 			}
 		})
 	}
@@ -150,7 +149,7 @@ func TestConstantsAscending(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ParseValue(%q): %v", s, err)
 		}
-		list = append(list, v)
+		list = append(list, v.Min)
 	}
 	for i := 1; i < len(list); i++ {
 		if list[i].Cmp(list[i-1]) < 0 {

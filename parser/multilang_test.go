@@ -119,8 +119,9 @@ func TestParseValueMultiLang(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseValue(%q) error: %v", tc.input, err)
 			}
-			if got.Cmp(tc.want) != 0 {
-				t.Errorf("ParseValue(%q) = %s, want %s", tc.input, got.RatString(), tc.want.RatString())
+			if got.Min.Cmp(tc.want) != 0 || got.Max.Cmp(tc.want) != 0 {
+				t.Errorf("ParseValue(%q) = [%s..%s], want %s",
+					tc.input, got.Min.RatString(), got.Max.RatString(), tc.want.RatString())
 			}
 		})
 	}
