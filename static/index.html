@@ -35,19 +35,34 @@
           <div class="stat-label">p99 latency</div>
         </div>
         <div class="stat">
-          <div id="count-display" class="stat-value live" hx-get="/count" hx-trigger="load">
+          <div
+            id="count-display"
+            class="stat-value live"
+            hx-get="/count"
+            hx-trigger="load"
+          >
             &mdash;
           </div>
           <div class="stat-label">Lists checked</div>
         </div>
         <div class="stat">
-          <div id="sorted-count-display" class="stat-value live" hx-get="/count/sorted" hx-trigger="load">
+          <div
+            id="sorted-count-display"
+            class="stat-value live"
+            hx-get="/count/sorted"
+            hx-trigger="load"
+          >
             &mdash;
           </div>
           <div class="stat-label">Sorted</div>
         </div>
         <div class="stat">
-          <div id="not-sorted-count-display" class="stat-value live" hx-get="/count/not-sorted" hx-trigger="load">
+          <div
+            id="not-sorted-count-display"
+            class="stat-value live"
+            hx-get="/count/not-sorted"
+            hx-trigger="load"
+          >
             &mdash;
           </div>
           <div class="stat-label">Not sorted</div>
@@ -58,16 +73,43 @@
       <section class="features">
         <p class="overline" style="text-align: center">Features</p>
         <ul>
-          <li><span class="check">&#10003;</span> &nbsp;Ascending &amp; descending</li>
-          <li><span class="check">&#10003;</span> &nbsp;Integers, floats &amp; big numbers</li>
-          <li><span class="check">&#10003;</span> &nbsp;Expressions (2^10, pi*2)</li>
-          <li><span class="check">&#10003;</span> &nbsp;Uncertainty &amp; ranges (10&plusmn;2)</li>
-          <li><span class="check">&#10003;</span> &nbsp;Sets &amp; intervals ({1, 3, 7})</li>
-          <li><span class="check">&#10003;</span> &nbsp;Math constants (&pi;, e, &tau;, &phi;)</li>
-          <li><span class="check">&#10003;</span> &nbsp;Roman numerals (XIV)</li>
-          <li><span class="check">&#10003;</span> &nbsp;Braille numbers (&#10300;&#10241;)</li>
-          <li><span class="check">&#10003;</span> &nbsp;Emoji digits (1&#xFE0F;&#x20E3;2&#xFE0F;&#x20E3;3&#xFE0F;&#x20E3;)</li>
-          <li><span class="check">&#10003;</span> &nbsp;15 languages for number words</li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Ascending &amp; descending
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Integers, floats &amp; big
+            numbers
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Expressions (2^10, pi*2)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Uncertainty &amp; ranges
+            (10&plusmn;2)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Sets &amp; intervals ({1,
+            3, 7})
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Math constants (&pi;, e,
+            &tau;, &phi;)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Roman numerals (XIV)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Braille numbers
+            (&#10300;&#10241;)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Emoji digits
+            (1&#xFE0F;&#x20E3;2&#xFE0F;&#x20E3;3&#xFE0F;&#x20E3;)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;15 languages for number
+            words
+          </li>
         </ul>
       </section>
 
@@ -76,7 +118,8 @@
         <p class="overline">Live demo</p>
         <h2>Try it yourself</h2>
         <p style="font-size: 13px; color: #64748b; margin: 0 0 14px">
-          Paste numbers &mdash; one per line or comma-separated. Integers, floats, big numbers, words, and ranges all work.
+          Paste numbers &mdash; one per line or comma-separated. Integers,
+          floats, big numbers, words, and ranges all work.
         </p>
         <form hx-post="/check" hx-target="#result" hx-swap="innerHTML">
           <textarea
@@ -122,7 +165,7 @@
             </div>
           </div>
           <div class="testimonial-card">
-            <p>"why"</p>
+            <p>"hot garbage"</p>
             <div class="testimonial-author">
               @bign8 <span>&middot; 1 star</span>
             </div>
@@ -207,7 +250,12 @@
     <!-- Activity feed sidebar -->
     <div class="activity-sidebar">
       <p class="activity-title">Recent checks</p>
-      <div id="activity-feed" hx-get="/activity" hx-trigger="load, every 5s [document.visibilityState=='visible']" hx-swap="innerHTML">
+      <div
+        id="activity-feed"
+        hx-get="/activity"
+        hx-trigger="load, every 5s [document.visibilityState=='visible']"
+        hx-swap="innerHTML"
+      >
         <p class="activity-empty">No checks yet</p>
       </div>
     </div>
