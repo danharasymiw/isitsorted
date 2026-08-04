@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math/big"
 	"net/http"
+	"sorted/parser"
 	"strings"
 )
 
@@ -28,12 +29,12 @@ func parseRaw(raw json.RawMessage) (*big.Rat, error) {
 		if err := json.Unmarshal(raw, &unquoted); err != nil {
 			return nil, err
 		}
-		return parseValue(unquoted)
+		return parser.ParseValue(unquoted)
 	}
 
 	// JSON number → parse the literal digits directly so we keep full
 	// precision for integers larger than int64.
-	return parseValue(s)
+	return parser.ParseValue(s)
 }
 
 func isSortedHandler(ctr *counter) http.HandlerFunc {
@@ -114,7 +115,7 @@ func checkFormHandler(ctr *counter, act *activityLog) http.HandlerFunc {
 				w.Write([]byte(`<div class="result-card error"><span class="result-icon">!</span><div><strong>Invalid input</strong><p>Empty value — remove consecutive commas.</p></div></div>`))
 				return
 			}
-			v, err := parseValue(p)
+			v, err := parser.ParseValue(p)
 			if err != nil {
 				w.Header().Set("Content-Type", "text/html")
 				w.Write([]byte(`<div class="result-card error"><span class="result-icon">!</span><div><strong>Invalid input</strong><p>Could not parse &#34;` + htmlEscape(p) + `&#34; as a number.</p></div></div>`))
