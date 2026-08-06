@@ -329,7 +329,9 @@
         hx-get="/activity"
         hx-trigger="load, every 5s [document.visibilityState=='visible']"
         hx-swap="innerHTML"
+        hx-indicator="#activity-spinner"
       >
+        <img id="activity-spinner" class="htmx-indicator activity-spinner" src="/spinner.svg" alt="Loading..." />
         <p class="activity-empty">No checks yet</p>
       </div>
     </div>
