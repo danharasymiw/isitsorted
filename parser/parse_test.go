@@ -91,6 +91,16 @@ func TestParseValue(t *testing.T) {
 		{"non-integer exponent", "2^1.5", nil, true},
 		{"negative power with zero in set", "(5±5)^-1", nil, true},
 
+		// Factorials
+		{"factorial 0", "0!", rat("1"), false},
+		{"factorial 1", "1!", rat("1"), false},
+		{"factorial 5", "5!", rat("120"), false},
+		{"factorial 10", "10!", rat("3628800"), false},
+		{"factorial in expr", "3!+1", rat("7"), false},
+		{"factorial with pow", "3!^2", rat("36"), false},
+		{"neg factorial", "-3!", rat("-6"), false},
+		{"factorial negative input", "(-3)!", nil, true},
+
 		// Emoji digits
 		{"emoji single", "3️⃣", rat("3"), false},
 		{"emoji multi", "1️⃣2️⃣3️⃣", rat("123"), false},

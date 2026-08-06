@@ -152,7 +152,7 @@ func ratPow(base *big.Rat, n int64) (*big.Rat, error) {
 	return result, nil
 }
 
-// parseUnary = ('+' | '-') parseUnary | parsePrimary
+// parseUnary = ('+' | '-') parseUnary | parsePostfix
 func (p *exprParser) parseUnary() (*Value, error) {
 	ch, ok := p.peek()
 	if !ok {
@@ -170,7 +170,44 @@ func (p *exprParser) parseUnary() (*Value, error) {
 		p.pos++
 		return p.parseUnary()
 	}
-	return p.parsePrimary()
+	return p.parsePostfix()
+}
+
+const maxFactorialInput = 1000
+
+// parsePostfix = parsePrimary '!'*
+func (p *exprParser) parsePostfix() (*Value, error) {
+	v, err := p.parsePrimary()
+	if err != nil {
+		return nil, err
+	}
+	for {
+		ch, ok := p.peek()
+		if !ok || ch != '!' {
+			break
+		}
+		p.pos++
+		if !v.IsPoint() {
+			return nil, fmt.Errorf("factorial requires a point value")
+		}
+		if !v.Min.IsInt() || v.Min.Sign() < 0 {
+			return nil, fmt.Errorf("factorial requires a non-negative integer")
+		}
+		n := v.Min.Num()
+		if !n.IsInt64() || n.Int64() > maxFactorialInput {
+			return nil, fmt.Errorf("factorial input too large (max %d)", maxFactorialInput)
+		}
+		v = PointValue(factorial(n.Int64()))
+	}
+	return v, nil
+}
+
+func factorial(n int64) *big.Rat {
+	result := new(big.Int).SetInt64(1)
+	for i := int64(2); i <= n; i++ {
+		result.Mul(result, big.NewInt(i))
+	}
+	return new(big.Rat).SetInt(result)
 }
 
 // parsePrimary = '(' parseAddSub ')' | atom
