@@ -150,12 +150,12 @@ func handleForm(w http.ResponseWriter, r *http.Request, ctr *counter, act *activ
 	oobCount := `<div id="count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.value()) + `</div>`
 	oobSorted := `<div id="sorted-count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.sortedValue()) + `</div>`
 	oobNotSorted := `<div id="not-sorted-count-display" hx-swap-oob="innerHTML">` + formatCount(ctr.notSortedValue()) + `</div>`
-	oobActivity := `<div id="activity-feed" hx-swap-oob="innerHTML">` + renderActivity(act.recent()) + `</div>`
 	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set("HX-Trigger", "activityUpdated")
 	if sorted {
-		w.Write([]byte(`<div class="result-card yes"><span class="result-icon">✓</span><div><strong>Yes, it&#39;s sorted</strong></div></div>` + oobCount + oobSorted + oobNotSorted + oobActivity))
+		w.Write([]byte(`<div class="result-card yes"><span class="result-icon">✓</span><div><strong>Yes, it&#39;s sorted</strong></div></div>` + oobCount + oobSorted + oobNotSorted))
 	} else {
-		w.Write([]byte(`<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it&#39;s not sorted</strong></div></div>` + oobCount + oobSorted + oobNotSorted + oobActivity))
+		w.Write([]byte(`<div class="result-card no"><span class="result-icon">✗</span><div><strong>No, it&#39;s not sorted</strong></div></div>` + oobCount + oobSorted + oobNotSorted))
 	}
 }
 

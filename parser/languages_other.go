@@ -2,14 +2,15 @@ package parser
 
 import "math/big"
 
-// init registers Russian, Arabic, and Hindi language definitions. Each table
-// covers nominative singular forms only — no grammatical agreement (case,
-// gender, number) is attempted for this first pass.
+// init registers Russian, Arabic, Hindi, and Abkhaz language definitions.
+// Each table covers nominative singular forms only — no grammatical agreement
+// (case, gender, number) is attempted for this first pass.
 func init() {
 	languages = append(languages,
 		russianLangDef(),
 		arabicLangDef(),
 		hindiLangDef(),
+		abkhazLangDef(),
 	)
 }
 
@@ -133,6 +134,43 @@ func arabicLangDef() langDef {
 		// "و" is the Arabic conjunction "wa" ("and"), used to connect
 		// number groups (e.g. "مئة و خمسة" = "a hundred and five").
 		skip: []string{"و"},
+	}
+}
+
+func abkhazLangDef() langDef {
+	// Abkhaz uses a hybrid vigesimal-decimal system. Numbers 1-19 are
+	// individual words; 20 (ҩажәа) is the vigesimal base. Hundreds and
+	// thousands work multiplicatively via the shared engine.
+	return langDef{
+		name: "abkhaz",
+		ones: map[string]int64{
+			"акы":     1,
+			"ҩба":     2,
+			"хԥа":     3,
+			"ԥшьба":   4,
+			"хәба":    5,
+			"фба":     6,
+			"бжьба":   7,
+			"ааба":    8,
+			"жәба":    9,
+			"жәаба":   10,
+			"жәеиза":  11,
+			"жәаҩа":   12,
+			"жәаха":   13,
+			"жәиԥшь":  14,
+			"жәохә":   15,
+			"жәаф":    16,
+			"жәибжь":  17,
+			"жәаа":    18,
+			"зеижә":   19,
+		},
+		tens: map[string]int64{
+			"ҩажәа": 20,
+		},
+		scales: map[string]*big.Int{
+			"шәкы": big.NewInt(100),
+			"зықы": big.NewInt(1_000),
+		},
 	}
 }
 

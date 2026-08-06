@@ -99,7 +99,7 @@
             (1&#xFE0F;&#x20E3;2&#xFE0F;&#x20E3;3&#xFE0F;&#x20E3;)
           </li>
           <li>
-            <span class="check">&#10003;</span> &nbsp;15 languages for number
+            <span class="check">&#10003;</span> &nbsp;16 languages for number
             words
           </li>
         </ul>
@@ -113,7 +113,12 @@
           Paste numbers &mdash; one per line or comma-separated. Integers,
           floats, big numbers, words, and ranges all work.
         </p>
-        <form hx-post="/is-sorted" hx-target="#result" hx-swap="innerHTML">
+        <form
+          hx-post="/is-sorted"
+          hx-target="#result"
+          hx-swap="innerHTML"
+          hx-on::config-request="if(!event.detail.parameters.list) event.detail.parameters.list = this.querySelector('textarea').placeholder"
+        >
           <textarea
             name="list"
             rows="6"
@@ -326,7 +331,7 @@
       <div
         id="activity-feed"
         hx-get="/activity"
-        hx-trigger="load, every 5s [document.visibilityState=='visible']"
+        hx-trigger="load, every 5s [document.visibilityState=='visible'], activityUpdated from:body"
         hx-swap="innerHTML"
         hx-indicator="#activity-spinner"
       >

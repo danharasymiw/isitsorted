@@ -78,6 +78,14 @@ func TestParseMultiLang(t *testing.T) {
 		// Korean Native
 		{"korean native 하나", "하나", 1, false},
 
+		// Abkhaz
+		{"abkhaz акы", "акы", 1, false},
+		{"abkhaz ҩба", "ҩба", 2, false},
+		{"abkhaz жәаба", "жәаба", 10, false},
+		{"abkhaz ҩажәа", "ҩажәа", 20, false},
+		{"abkhaz ҩажәа акы", "ҩажәа акы", 21, false},
+		{"abkhaz хԥа шәкы", "хԥа шәкы", 300, false},
+
 		// Rejection
 		{"garbage rejected", "drei banana", 0, true},
 		{"empty rejected", "", 0, true},
