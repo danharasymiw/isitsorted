@@ -46,19 +46,11 @@
           <div class="stat-label">Lists checked</div>
         </div>
         <div class="stat">
-          <div
-            id="sorted-count-display"
-            class="stat-value live"
-          >
-            &mdash;
-          </div>
+          <div id="sorted-count-display" class="stat-value live">&mdash;</div>
           <div class="stat-label">Sorted</div>
         </div>
         <div class="stat">
-          <div
-            id="not-sorted-count-display"
-            class="stat-value live"
-          >
+          <div id="not-sorted-count-display" class="stat-value live">
             &mdash;
           </div>
           <div class="stat-label">Not sorted</div>
@@ -185,7 +177,7 @@
           </div>
           <div class="faq-item">
             <dt>Why would I use this?</dt>
-            <dd>You've got a list. You want to know if it's sorted.</dd>
+            <dd>Is your list sorted? Oh you don't know?</dd>
           </div>
           <div class="faq-item">
             <dt>Is there a paid plan?</dt>
@@ -274,27 +266,24 @@
         <div class="code-block">
           <span class="dim">200 OK</span><br /><br />
           <span class="base">{</span><br />
-          &nbsp;&nbsp;<span class="key">"id"</span
-          ><span class="base">:</span>
-          <span class="str">"a1b2c3d4-..."</span
-          ><span class="base">,</span><br />
+          &nbsp;&nbsp;<span class="key">"id"</span><span class="base">:</span>
+          <span class="str">"a1b2c3d4-..."</span><span class="base">,</span
+          ><br />
           &nbsp;&nbsp;<span class="key">"status"</span
-          ><span class="base">:</span>
-          <span class="str">"complete"</span
+          ><span class="base">:</span> <span class="str">"complete"</span
           ><span class="base">,</span><br />
           &nbsp;&nbsp;<span class="key">"sorted"</span
-          ><span class="base">:</span>
-          <span class="str">true</span><br />
+          ><span class="base">:</span> <span class="str">true</span><br />
           <span class="base">}</span>
         </div>
 
         <p class="section-label">curl</p>
         <div class="code-block">
-          <span class="cmd">JOB</span><span class="base">=$(</span><span
-            class="cmd"
-            >curl</span
+          <span class="cmd">JOB</span><span class="base">=$(</span
+          ><span class="cmd">curl</span>
+          <span class="str"
+            >-s -X POST https://isitsorted.ca/async/is-sorted</span
           >
-          <span class="str">-s -X POST https://isitsorted.ca/async/is-sorted</span>
           \<br />
           &nbsp;&nbsp;<span class="str"
             >-H "Content-Type: application/json"</span
@@ -331,7 +320,12 @@
         hx-swap="innerHTML"
         hx-indicator="#activity-spinner"
       >
-        <img id="activity-spinner" class="htmx-indicator activity-spinner" src="/spinner.svg" alt="Loading..." />
+        <img
+          id="activity-spinner"
+          class="htmx-indicator activity-spinner"
+          src="/spinner.svg"
+          alt="Loading..."
+        />
         <p class="activity-empty">No checks yet</p>
       </div>
     </div>
