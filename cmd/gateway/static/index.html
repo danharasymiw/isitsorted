@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Is It Sorted?</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
+  </head>
+  <body>
+    <div class="page">
+      <!-- Hero -->
+      <section class="hero">
+        <p class="brand">isitsorted.ca</p>
+        <h1>Is It Sorted?</h1>
+        <p class="tagline">as a Service.</p>
+        <div class="hero-actions">
+          <a href="#demo"
+            ><button class="btn-primary">Try it free &rarr;</button></a
+          >
+          <a href="#api"
+            ><button class="btn-secondary">View API docs</button></a
+          >
+        </div>
+      </section>
+
+      <!-- Stats -->
+      <section class="stats">
+        <div class="stat">
+          <div class="stat-value">Currently</div>
+          <div class="stat-label">Up?</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">Fast</div>
+          <div class="stat-label">p99 latency</div>
+        </div>
+        <div class="stat">
+          <div
+            id="count-display"
+            class="stat-value live"
+            hx-get="/count"
+            hx-trigger="load"
+          >
+            &mdash;
+          </div>
+          <div class="stat-label">Lists checked</div>
+        </div>
+        <div class="stat">
+          <div id="sorted-count-display" class="stat-value live">&mdash;</div>
+          <div class="stat-label">Sorted</div>
+        </div>
+        <div class="stat">
+          <div id="not-sorted-count-display" class="stat-value live">
+            &mdash;
+          </div>
+          <div class="stat-label">Not sorted</div>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section class="features">
+        <p class="overline" style="text-align: center">Features</p>
+        <ul>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Ascending &amp; descending
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Integers, floats &amp; big
+            numbers
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Expressions (2^10, pi*2)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Uncertainty &amp; ranges
+            (10&plusmn;2)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Sets &amp; intervals ({1,
+            3, 7})
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Math constants (&pi;, e,
+            &tau;, &phi;)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Hex, binary &amp; octal
+            (0xFF, 0b101)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Roman numerals (XIV)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Braille numbers
+            (&#10300;&#10241;)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;Emoji digits
+            (1&#xFE0F;&#x20E3;2&#xFE0F;&#x20E3;3&#xFE0F;&#x20E3;)
+          </li>
+          <li>
+            <span class="check">&#10003;</span> &nbsp;16 languages for number
+            words
+          </li>
+        </ul>
+      </section>
+
+      <!-- Form -->
+      <section id="demo">
+        <p class="overline">Live demo</p>
+        <h2>Try it yourself</h2>
+        <p style="font-size: 13px; color: #64748b; margin: 0 0 14px">
+          Paste numbers &mdash; one per line or comma-separated. Integers,
+          floats, big numbers, words, and ranges all work.
+        </p>
+        <form
+          hx-post="/is-sorted"
+          hx-target="#result"
+          hx-swap="innerHTML"
+          hx-on::config-request="if(!event.detail.parameters.list) event.detail.parameters.list = this.querySelector('textarea').placeholder"
+        >
+          <textarea
+            name="list"
+            rows="6"
+            placeholder="one&#10;2&#10;3.14&#10;99999999999999999999"
+          ></textarea>
+          <div class="controls">
+            <label class="radio-label">
+              <input type="radio" name="order" value="asc" checked />
+              <span class="radio-dot"></span>
+              Ascending
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="order" value="desc" />
+              <span class="radio-dot"></span>
+              Descending
+            </label>
+            <button type="submit" class="btn-primary" style="margin-left: auto">
+              Check &rarr;
+            </button>
+          </div>
+        </form>
+        <div id="result"></div>
+      </section>
+
+      <!-- Testimonials -->
+      <section>
+        <p class="overline" style="text-align: center">What users say</p>
+        <div class="testimonials-list">
+          <div class="testimonial-card">
+            <p>
+              "I never knew if <code>.sort()</code> actually sorts, it does."
+            </p>
+            <div class="testimonial-author">
+              @danharasymiw <span>&middot; 5 stars</span>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p>"it works"</p>
+            <div class="testimonial-author">
+              anonymous <span>&middot; 5 stars</span>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p>"hot garbage"</p>
+            <div class="testimonial-author">
+              @bign8 <span>&middot; 1 star</span>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <p>
+              incredibly helpful, Im always wondering if my lists are sorted but
+              not enough to fix them if they aren't
+            </p>
+            <div class="testimonial-author">
+              @jason <span>&middot; 5 stars</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section>
+        <p class="overline" style="text-align: center">
+          Frequently asked questions
+        </p>
+        <dl class="faq-list">
+          <div class="faq-item">
+            <dt>Does it sort the list?</dt>
+            <dd>No.</dd>
+          </div>
+          <div class="faq-item">
+            <dt>Why would I use this?</dt>
+            <dd>Is your list sorted? Oh you don't know?</dd>
+          </div>
+          <div class="faq-item">
+            <dt>Is there a paid plan?</dt>
+            <dd>No. Free, forever.</dd>
+          </div>
+        </dl>
+      </section>
+
+      <!-- API Docs -->
+      <section id="api">
+        <p class="overline">JSON API</p>
+        <h2>POST /is-sorted</h2>
+        <p style="font-size: 13px; color: #64748b; margin: 0 0 16px">
+          Returns JSON. No auth required.
+        </p>
+
+        <p class="section-label">Request</p>
+        <div class="code-block">
+          <span class="dim">POST /is-sorted</span><br />
+          <span class="dim">Content-Type: application/json</span><br /><br />
+          <span class="base">{</span><br />
+          &nbsp;&nbsp;<span class="key">"list"</span
+          ><span class="base">: [</span><span class="num">1, 3, 2, 4</span
+          ><span class="base">],</span><br />
+          &nbsp;&nbsp;<span class="key">"order"</span
+          ><span class="base">: </span><span class="str">"asc"</span><br />
+          <span class="base">}</span>
+        </div>
+
+        <p class="section-label">Response</p>
+        <div class="code-block">
+          <span class="dim">200 OK</span><br /><br />
+          <span class="base">{</span> <span class="key">"sorted"</span
+          ><span class="base">:</span> <span class="str">true</span>
+          <span class="base">}</span>
+        </div>
+
+        <p class="section-label">curl</p>
+        <div class="code-block">
+          <span class="cmd">curl</span>
+          <span class="str">-X POST https://isitsorted.ca/is-sorted</span>
+          \<br />
+          &nbsp;&nbsp;<span class="str"
+            >-H "Content-Type: application/json"</span
+          >
+          \<br />
+          &nbsp;&nbsp;<span class="str"
+            >-d '{"list":[1,2,3],"order":"asc"}'</span
+          >
+        </div>
+      </section>
+
+      <section id="async-api">
+        <p class="overline">JSON API</p>
+        <h2>Async API</h2>
+        <p style="font-size: 13px; color: #64748b; margin: 0 0 16px">
+          Submit a job, get an ID, poll for the result. No auth required.
+        </p>
+
+        <p class="section-label">Submit</p>
+        <div class="code-block">
+          <span class="dim">POST /async/is-sorted</span><br />
+          <span class="dim">Content-Type: application/json</span><br /><br />
+          <span class="base">{</span><br />
+          &nbsp;&nbsp;<span class="key">"list"</span
+          ><span class="base">: [</span><span class="num">1, 3, 2, 4</span
+          ><span class="base">],</span><br />
+          &nbsp;&nbsp;<span class="key">"order"</span
+          ><span class="base">: </span><span class="str">"asc"</span><br />
+          <span class="base">}</span>
+        </div>
+
+        <div class="code-block">
+          <span class="dim">202 Accepted</span><br /><br />
+          <span class="base">{</span> <span class="key">"id"</span
+          ><span class="base">:</span>
+          <span class="str">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>
+          <span class="base">}</span>
+        </div>
+
+        <p class="section-label">Poll</p>
+        <div class="code-block">
+          <span class="dim">GET /async/is-sorted/{id}</span>
+        </div>
+
+        <div class="code-block">
+          <span class="dim">200 OK</span><br /><br />
+          <span class="base">{</span><br />
+          &nbsp;&nbsp;<span class="key">"id"</span><span class="base">:</span>
+          <span class="str">"a1b2c3d4-..."</span><span class="base">,</span
+          ><br />
+          &nbsp;&nbsp;<span class="key">"status"</span
+          ><span class="base">:</span> <span class="str">"complete"</span
+          ><span class="base">,</span><br />
+          &nbsp;&nbsp;<span class="key">"sorted"</span
+          ><span class="base">:</span> <span class="str">true</span><br />
+          <span class="base">}</span>
+        </div>
+
+        <p class="section-label">curl</p>
+        <div class="code-block">
+          <span class="cmd">JOB</span><span class="base">=$(</span
+          ><span class="cmd">curl</span>
+          <span class="str"
+            >-s -X POST https://isitsorted.ca/async/is-sorted</span
+          >
+          \<br />
+          &nbsp;&nbsp;<span class="str"
+            >-H "Content-Type: application/json"</span
+          >
+          \<br />
+          &nbsp;&nbsp;<span class="str"
+            >-d '{"list":[1,2,3],"order":"asc"}'</span
+          >
+          <span class="base">)</span><br /><br />
+          <span class="cmd">curl</span>
+          <span class="str"
+            >https://isitsorted.ca/async/is-sorted/$(echo $JOB | jq -r
+            .id)</span
+          >
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <section class="footer">
+        <span class="left"
+          >&copy; 2026 isitsorted.ca &mdash; All rights reserved. Patent
+          pending.</span
+        >
+        <a href="https://status.isitsorted.ca" class="footer-link">Status</a>
+      </section>
+    </div>
+
+    <!-- Activity feed sidebar -->
+    <div class="activity-sidebar">
+      <p class="activity-title">Recent checks</p>
+      <div
+        id="activity-feed"
+        hx-get="/activity"
+        hx-trigger="load, every 5s [document.visibilityState=='visible'], activityUpdated from:body"
+        hx-swap="innerHTML"
+        hx-indicator="#activity-spinner"
+      >
+        <img
+          id="activity-spinner"
+          class="htmx-indicator activity-spinner"
+          src="/spinner.svg"
+          alt="Loading..."
+        />
+        <p class="activity-empty">No checks yet</p>
+      </div>
+    </div>
+  </body>
+</html>

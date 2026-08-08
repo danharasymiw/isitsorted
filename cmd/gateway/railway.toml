@@ -1,0 +1,3 @@
+[build]
+dockerfilePath = "cmd/gateway/Dockerfile"
+watchPaths = ["cmd/gateway/**", "internal/**", "parser/**", "go.mod", "go.sum"]

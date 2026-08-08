@@ -1,0 +1,181 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f1f5f9;
+  margin: 0;
+  padding: 0;
+  color: #0f172a;
+}
+.status-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Header */
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 0;
+}
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #16a34a;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.status-brand {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  text-decoration: none;
+}
+.status-brand:hover {
+  color: #4f46e5;
+}
+
+/* Hero */
+.status-hero {
+  background: #16a34a;
+  border-radius: 10px;
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.status-hero-check {
+  font-size: 28px;
+  color: #fff;
+  display: block;
+  margin-bottom: 8px;
+}
+.status-hero h1 {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin: 0;
+}
+
+/* Components */
+.status-components {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+.status-component {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.status-component:last-child {
+  border-bottom: none;
+}
+.component-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.component-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #16a34a;
+}
+
+/* Uptime */
+.status-uptime {
+  margin-bottom: 24px;
+}
+.status-uptime h2 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 0 0 16px;
+}
+.uptime-row {
+  margin-bottom: 20px;
+}
+.uptime-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+.uptime-bar {
+  display: flex;
+  gap: 1px;
+  height: 34px;
+  align-items: stretch;
+}
+.uptime-day {
+  flex: 1;
+  background: #16a34a;
+  border-radius: 2px;
+  cursor: default;
+  position: relative;
+}
+.uptime-day:hover {
+  opacity: 0.8;
+}
+.uptime-day:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+.uptime-range {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+.uptime-pct {
+  font-size: 12px;
+  font-weight: 600;
+  color: #16a34a;
+  margin-top: 2px;
+}
+
+/* Incidents */
+.status-incidents {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 48px;
+}
+.status-incidents h2 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 0 0 12px;
+}
+.incidents-none {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
