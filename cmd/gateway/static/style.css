@@ -221,6 +221,7 @@ h2 {
   font-weight: 700;
   font-size: 14px;
   fill: #334155;
+  text-anchor: middle;
 }
 @keyframes dash-flow {
   to { stroke-dashoffset: -24; }
