@@ -107,7 +107,7 @@ func TestHtmlEscape(t *testing.T) {
 
 func TestSSEHeaders(t *testing.T) {
 	w := httptest.NewRecorder()
-	sendSSEStatus(w, w, "queued", false)
+	sendSSEStatus(w, w, "queued", "test-id-1234", false)
 	if w.Header().Get("Content-Type") != "" {
 		// Headers are set by the sseHandler, not sendSSEStatus
 	}

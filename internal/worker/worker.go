@@ -48,7 +48,6 @@ func New(q *queue.Client, ps *pubsub.Client, s *storage.Client, c *counter.Count
 // until ctx is canceled.
 func (w *Worker) Run(ctx context.Context) error {
 	w.logger.Info("worker started")
-	w.counter.Seed(ctx, 622, 290, 332)
 	go w.snapshotLoop(ctx)
 	go w.cleanupLoop(ctx)
 	for {
