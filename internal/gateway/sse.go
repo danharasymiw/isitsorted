@@ -17,7 +17,7 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := r.PathValue("id")
 	ctx := r.Context()
-	html := r.Header.Get("HX-Request") == "true"
+	html := r.URL.Query().Get("format") == "html"
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
