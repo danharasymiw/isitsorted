@@ -20,7 +20,6 @@ import (
 	"sorted/internal/gateway"
 	"sorted/internal/pubsub"
 	"sorted/internal/queue"
-	"sorted/internal/ratelimit"
 	"sorted/internal/storage"
 )
 
@@ -66,7 +65,7 @@ func main() {
 		store,
 		counter.New(rdb),
 		activity.New(rdb),
-		ratelimit.New(rdb, 100, time.Minute),
+		gateway.NewLimiter(rdb, 100, time.Minute),
 		staticFS,
 	)
 

@@ -1,4 +1,4 @@
-package sortcheck
+package worker
 
 import (
 	"math/big"

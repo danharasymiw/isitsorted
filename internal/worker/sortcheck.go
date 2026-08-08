@@ -1,6 +1,4 @@
-// Package sortcheck contains the pure logic for determining whether a
-// parsed list of values is sorted in a given order.
-package sortcheck
+package worker
 
 import (
 	"math/big"

@@ -13,7 +13,6 @@ import (
 	"sorted/internal/counter"
 	"sorted/internal/pubsub"
 	"sorted/internal/queue"
-	"sorted/internal/ratelimit"
 	"sorted/internal/storage"
 )
 
@@ -24,13 +23,13 @@ type Gateway struct {
 	storage  *storage.Client
 	counter  *counter.Counter
 	activity *activity.Log
-	limiter  *ratelimit.Limiter
+	limiter  *Limiter
 	staticFS embed.FS
 }
 
 // New creates a Gateway wired to the given backing services. staticFS must
 // embed a top-level "static" directory containing the frontend assets.
-func New(q *queue.Client, ps *pubsub.Client, s *storage.Client, c *counter.Counter, a *activity.Log, rl *ratelimit.Limiter, staticFS embed.FS) *Gateway {
+func New(q *queue.Client, ps *pubsub.Client, s *storage.Client, c *counter.Counter, a *activity.Log, rl *Limiter, staticFS embed.FS) *Gateway {
 	return &Gateway{
 		queue:    q,
 		pubsub:   ps,

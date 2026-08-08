@@ -21,7 +21,6 @@ import (
 	"sorted/internal/model"
 	"sorted/internal/pubsub"
 	"sorted/internal/queue"
-	"sorted/internal/ratelimit"
 	"sorted/internal/storage"
 	"sorted/internal/worker"
 )
@@ -72,7 +71,7 @@ func TestEndToEndSortCheck(t *testing.T) {
 	ps := pubsub.New(rdb)
 	ctr := counter.New(rdb)
 	act := activity.New(rdb)
-	rl := ratelimit.New(rdb, 100, time.Minute)
+	rl := gateway.NewLimiter(rdb, 100, time.Minute)
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	gw := gateway.New(qc, ps, store, ctr, act, rl, testStaticFS)

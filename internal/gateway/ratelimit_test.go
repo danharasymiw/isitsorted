@@ -1,4 +1,4 @@
-package ratelimit
+package gateway
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func testRedis(t *testing.T) *redis.Client {
 
 func TestAllowUnderLimit(t *testing.T) {
 	rdb := testRedis(t)
-	l := New(rdb, 3, time.Minute)
+	l := NewLimiter(rdb, 3, time.Minute)
 	ctx := context.Background()
 
 	for i := 0; i < 3; i++ {
@@ -42,7 +42,7 @@ func TestAllowUnderLimit(t *testing.T) {
 
 func TestBlockOverLimit(t *testing.T) {
 	rdb := testRedis(t)
-	l := New(rdb, 2, time.Minute)
+	l := NewLimiter(rdb, 2, time.Minute)
 	ctx := context.Background()
 
 	l.Allow(ctx, "1.2.3.4")
@@ -55,7 +55,7 @@ func TestBlockOverLimit(t *testing.T) {
 
 func TestDifferentIPsIndependent(t *testing.T) {
 	rdb := testRedis(t)
-	l := New(rdb, 1, time.Minute)
+	l := NewLimiter(rdb, 1, time.Minute)
 	ctx := context.Background()
 
 	ok1, _ := l.Allow(ctx, "1.1.1.1")

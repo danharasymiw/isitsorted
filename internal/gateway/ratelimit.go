@@ -1,4 +1,4 @@
-package ratelimit
+package gateway
 
 import (
 	"context"
@@ -18,7 +18,7 @@ type Limiter struct {
 	window time.Duration
 }
 
-func New(rdb *redis.Client, limit int, window time.Duration) *Limiter {
+func NewLimiter(rdb *redis.Client, limit int, window time.Duration) *Limiter {
 	return &Limiter{rdb: rdb, limit: int64(limit), window: window}
 }
 

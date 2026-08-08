@@ -16,7 +16,6 @@ import (
 	"sorted/internal/model"
 	"sorted/internal/pubsub"
 	"sorted/internal/queue"
-	"sorted/internal/sortcheck"
 	"sorted/internal/storage"
 	"sorted/parser"
 )
@@ -122,7 +121,7 @@ func (w *Worker) ProcessJob(ctx context.Context, job *model.Job) error {
 		values = append(values, v)
 	}
 
-	sorted := sortcheck.Check(values, job.Order)
+	sorted := Check(values, job.Order)
 
 	result := model.Result{
 		ID:     job.ID,
