@@ -1,6 +1,6 @@
-// Command gateway runs the HTTP-facing "Is It Sorted?" API: job
-// submission, SSE status streaming, presigned uploads, counter/activity
-// endpoints, the static HTMX frontend, and a host-routed status page.
+// Command gateway runs the HTTP-facing "Is It Sorted?" API: job submission,
+// SSE status streaming, presigned uploads, counter/activity endpoints, the
+// embedded static HTMX frontend, and a host-routed status page.
 package main
 
 import (
