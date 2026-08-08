@@ -49,10 +49,11 @@ func main() {
 
 	ctx := context.Background()
 	store, err := storage.New(ctx, storage.Config{
-		Endpoint:  os.Getenv("S3_ENDPOINT"),
-		Bucket:    os.Getenv("S3_BUCKET"),
-		AccessKey: os.Getenv("S3_ACCESS_KEY_ID"),
-		SecretKey: os.Getenv("S3_SECRET_ACCESS_KEY"),
+		Endpoint:     os.Getenv("S3_ENDPOINT"),
+		Bucket:       os.Getenv("S3_BUCKET"),
+		AccessKey:    os.Getenv("S3_ACCESS_KEY_ID"),
+		SecretKey:    os.Getenv("S3_SECRET_ACCESS_KEY"),
+		UsePathStyle: os.Getenv("S3_USE_PATH_STYLE") == "true",
 	})
 	if err != nil {
 		logger.Error("failed to create storage client", "error", err)
