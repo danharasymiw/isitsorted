@@ -144,15 +144,9 @@ h2 {
   font-weight: 700;
 }
 
-/* features + architecture: visually merge into one card */
-.features {
-  border-bottom: none;
-  padding-bottom: 16px;
-}
 .architecture {
-  background: #fff;
   text-align: center;
-  border-top: none;
+  padding-top: 32px;
 }
 .architecture-subtitle {
   font-size: 13px;
