@@ -79,7 +79,7 @@ func (g *Gateway) submitHandler(w http.ResponseWriter, r *http.Request) {
 
 	if strings.HasPrefix(ct, "application/x-www-form-urlencoded") {
 		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprintf(w, `<div id="result" hx-ext="sse" sse-connect="/is-sorted/%s/events" sse-swap="result" sse-close="close">`+
+		fmt.Fprintf(w, `<div id="result" hx-ext="sse" sse-connect="/is-sorted/%s/events" sse-swap="status:innerHTML result:innerHTML" sse-close="close">`+
 			`<div class="result-card processing">Queued...</div>`+
 			`</div>`, id)
 	} else {

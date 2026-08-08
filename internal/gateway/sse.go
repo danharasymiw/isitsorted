@@ -75,7 +75,7 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 				sendSSEResult(w, flusher, result)
 				return
 			}
-			sendSSEStatus(w, flusher, event.Status)
+			sendSSEStatusEvent(w, flusher, event)
 			timeout.Reset(sseTimeout)
 		case <-timeout.C:
 			fmt.Fprintf(w, "event: error\ndata: {\"error\":\"timeout\"}\n\n")
@@ -90,6 +90,15 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 
 func sendSSEStatus(w http.ResponseWriter, flusher http.Flusher, status string) {
 	fmt.Fprintf(w, "event: status\ndata: {\"status\":%q}\n\n", status)
+	flusher.Flush()
+}
+
+func sendSSEStatusEvent(w http.ResponseWriter, flusher http.Flusher, event model.StatusEvent) {
+	if event.WorkerID > 0 {
+		fmt.Fprintf(w, "event: status\ndata: <div class=\"result-card processing\">Processing on Worker #%d...</div>\n\n", event.WorkerID)
+	} else {
+		fmt.Fprintf(w, "event: status\ndata: <div class=\"result-card processing\">Processing...</div>\n\n")
+	}
 	flusher.Flush()
 }
 

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -143,8 +144,12 @@ func (w *Worker) snapshotState(ctx context.Context) {
 // ProcessJob reads the job's list from the bucket, parses and checks it,
 // and records the status/result via Redis, the bucket, and pub/sub.
 func (w *Worker) ProcessJob(ctx context.Context, job *model.Job) error {
-	w.pubsub.Publish(ctx, job.ID, model.StatusEvent{Status: model.StatusProcessing})
+	workerID := rand.Intn(5) + 1
+	w.pubsub.Publish(ctx, job.ID, model.StatusEvent{Status: model.StatusProcessing, WorkerID: workerID})
 	w.queue.SetStatus(ctx, job.ID, model.StatusProcessing)
+
+	// Simulate worker pickup delay
+	time.Sleep(time.Duration(500+rand.Intn(1500)) * time.Millisecond)
 
 	data, err := w.storage.GetList(ctx, job.ID)
 	if err != nil {
@@ -160,6 +165,9 @@ func (w *Worker) ProcessJob(ctx context.Context, job *model.Job) error {
 		}
 		values = append(values, v)
 	}
+
+	// Simulate sort computation time
+	time.Sleep(time.Duration(500+rand.Intn(2000)) * time.Millisecond)
 
 	sorted := Check(values, job.Order)
 

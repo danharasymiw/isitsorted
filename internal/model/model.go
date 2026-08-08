@@ -29,9 +29,10 @@ type Result struct {
 
 // StatusEvent is a status update pushed to clients (e.g. over SSE).
 type StatusEvent struct {
-	Status string `json:"status"`
-	Sorted bool   `json:"sorted,omitempty"`
-	Error  string `json:"error,omitempty"`
+	Status   string `json:"status"`
+	Sorted   bool   `json:"sorted,omitempty"`
+	Error    string `json:"error,omitempty"`
+	WorkerID int    `json:"worker_id,omitempty"`
 }
 
 // ActivityEntry is a single record in the recent-activity feed.
