@@ -60,8 +60,8 @@ func TestEndToEndSortCheck(t *testing.T) {
 	store, err := storage.New(ctx, storage.Config{
 		Endpoint:  s3Endpoint,
 		Bucket:    os.Getenv("S3_BUCKET"),
-		AccessKey: os.Getenv("S3_ACCESS_KEY"),
-		SecretKey: os.Getenv("S3_SECRET_KEY"),
+		AccessKey: os.Getenv("S3_ACCESS_KEY_ID"),
+		SecretKey: os.Getenv("S3_SECRET_ACCESS_KEY"),
 	})
 	if err != nil {
 		t.Skipf("S3 not available: %v", err)
