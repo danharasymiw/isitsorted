@@ -43,6 +43,19 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 	events, cancel := g.pubsub.Subscribe(ctx, id)
 	defer cancel()
 
+	// Re-check status after subscribing: the job may have finished between
+	// the initial GetStatus call and the Subscribe call above, in which case
+	// the publish already happened and would otherwise be missed, forcing
+	// the client to wait out the full timeout.
+	status, _ = g.queue.GetStatus(ctx, id)
+	if status == model.StatusDone || status == model.StatusError {
+		result, err := g.queue.GetResult(ctx, id)
+		if err == nil {
+			sendSSEResult(w, flusher, result)
+			return
+		}
+	}
+
 	timeout := time.NewTimer(sseTimeout)
 	defer timeout.Stop()
 

@@ -19,11 +19,9 @@
     </section>
 
     <section class="status-components">
-      <div class="status-component"><span class="component-name">Sort Checker</span><span class="component-status"><span class="status-dot"></span> Operational</span></div>
-      <div class="status-component"><span class="component-name">Async API</span><span class="component-status"><span class="status-dot"></span> Operational</span></div>
-      <div class="status-component"><span class="component-name">Counter</span><span class="component-status"><span class="status-dot"></span> Operational</span></div>
-      <div class="status-component"><span class="component-name">Activity Feed</span><span class="component-status"><span class="status-dot"></span> Operational</span></div>
-      <div class="status-component"><span class="component-name">Website</span><span class="component-status"><span class="status-dot"></span> Operational</span></div>
+      {{range .Components}}
+      <div class="status-component"><span class="component-name">{{.Name}}</span><span class="component-status{{if ne .Status "Operational"}} degraded{{end}}"><span class="status-dot{{if ne .Status "Operational"}} degraded{{end}}"></span> {{.Status}}</span></div>
+      {{end}}
     </section>
 
     <section class="status-uptime">

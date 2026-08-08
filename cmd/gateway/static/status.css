@@ -95,6 +95,12 @@ body {
   font-weight: 500;
   color: #16a34a;
 }
+.component-status.degraded {
+  color: #dc2626;
+}
+.status-dot.degraded {
+  background: #dc2626;
+}
 
 /* Uptime */
 .status-uptime {
