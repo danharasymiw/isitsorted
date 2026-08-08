@@ -39,7 +39,10 @@ func (c *Counter) Values(ctx context.Context) (total, sorted, notSorted int64, e
 	tCmd := pipe.Get(ctx, totalKey)
 	sCmd := pipe.Get(ctx, sortedKey)
 	nsCmd := pipe.Get(ctx, notSortedKey)
-	pipe.Exec(ctx)
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		return 0, 0, 0, err
+	}
 
 	total, _ = tCmd.Int64()
 	sorted, _ = sCmd.Int64()
