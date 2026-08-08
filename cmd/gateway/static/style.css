@@ -122,7 +122,8 @@ h2 {
 .features {
   background: #fff;
   text-align: center;
-  margin-bottom: 8px;
+  border-bottom: none;
+  margin-bottom: 12px;
 }
 .features ul {
   list-style: none;
