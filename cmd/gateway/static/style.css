@@ -147,6 +147,8 @@ h2 {
 .architecture {
   text-align: center;
   padding-top: 32px;
+  margin-top: 32px;
+  border-top: 1px solid #e2e8f0;
 }
 .architecture-subtitle {
   font-size: 13px;
