@@ -5,9 +5,9 @@
 *.so
 *.so.*
 *.dylib
-sorted
-gateway
-worker
+/sorted
+/gateway
+/worker
 .superpowers
 docs/superpowers
 
