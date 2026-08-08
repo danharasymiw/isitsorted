@@ -296,48 +296,6 @@
 
         <p class="section-label">Response</p>
         <div class="code-block">
-          <span class="dim">200 OK</span><br /><br />
-          <span class="base">{</span> <span class="key">"sorted"</span
-          ><span class="base">:</span> <span class="str">true</span>
-          <span class="base">}</span>
-        </div>
-
-        <p class="section-label">curl</p>
-        <div class="code-block">
-          <span class="cmd">curl</span>
-          <span class="str">-X POST https://isitsorted.ca/is-sorted</span>
-          \<br />
-          &nbsp;&nbsp;<span class="str"
-            >-H "Content-Type: application/json"</span
-          >
-          \<br />
-          &nbsp;&nbsp;<span class="str"
-            >-d '{"list":[1,2,3],"order":"asc"}'</span
-          >
-        </div>
-      </section>
-
-      <section id="async-api">
-        <p class="overline">JSON API</p>
-        <h2>Async API</h2>
-        <p style="font-size: 13px; color: #64748b; margin: 0 0 16px">
-          Submit a job, get an ID, poll for the result. No auth required.
-        </p>
-
-        <p class="section-label">Submit</p>
-        <div class="code-block">
-          <span class="dim">POST /async/is-sorted</span><br />
-          <span class="dim">Content-Type: application/json</span><br /><br />
-          <span class="base">{</span><br />
-          &nbsp;&nbsp;<span class="key">"list"</span
-          ><span class="base">: [</span><span class="num">1, 3, 2, 4</span
-          ><span class="base">],</span><br />
-          &nbsp;&nbsp;<span class="key">"order"</span
-          ><span class="base">: </span><span class="str">"asc"</span><br />
-          <span class="base">}</span>
-        </div>
-
-        <div class="code-block">
           <span class="dim">202 Accepted</span><br /><br />
           <span class="base">{</span> <span class="key">"id"</span
           ><span class="base">:</span>
@@ -345,32 +303,11 @@
           <span class="base">}</span>
         </div>
 
-        <p class="section-label">Poll</p>
-        <div class="code-block">
-          <span class="dim">GET /async/is-sorted/{id}</span>
-        </div>
-
-        <div class="code-block">
-          <span class="dim">200 OK</span><br /><br />
-          <span class="base">{</span><br />
-          &nbsp;&nbsp;<span class="key">"id"</span><span class="base">:</span>
-          <span class="str">"a1b2c3d4-..."</span><span class="base">,</span
-          ><br />
-          &nbsp;&nbsp;<span class="key">"status"</span
-          ><span class="base">:</span> <span class="str">"complete"</span
-          ><span class="base">,</span><br />
-          &nbsp;&nbsp;<span class="key">"sorted"</span
-          ><span class="base">:</span> <span class="str">true</span><br />
-          <span class="base">}</span>
-        </div>
-
         <p class="section-label">curl</p>
         <div class="code-block">
           <span class="cmd">JOB</span><span class="base">=$(</span
           ><span class="cmd">curl</span>
-          <span class="str"
-            >-s -X POST https://isitsorted.ca/async/is-sorted</span
-          >
+          <span class="str">-s -X POST https://isitsorted.ca/is-sorted</span>
           \<br />
           &nbsp;&nbsp;<span class="str"
             >-H "Content-Type: application/json"</span
@@ -382,9 +319,107 @@
           <span class="base">)</span><br /><br />
           <span class="cmd">curl</span>
           <span class="str"
-            >https://isitsorted.ca/async/is-sorted/$(echo $JOB | jq -r
-            .id)</span
+            >https://isitsorted.ca/is-sorted/$(echo $JOB | jq -r .id)</span
           >
+        </div>
+      </section>
+
+      <section id="async-api">
+        <p class="overline">JSON API</p>
+        <h2>Poll for a result</h2>
+        <p style="font-size: 13px; color: #64748b; margin: 0 0 16px">
+          Every submission is processed asynchronously by a worker. Poll the
+          job ID for status and result, or stream updates over SSE. No auth
+          required.
+        </p>
+
+        <p class="section-label">Poll</p>
+        <div class="code-block">
+          <span class="dim">GET /is-sorted/{id}</span>
+        </div>
+
+        <div class="code-block">
+          <span class="dim">200 OK</span><br /><br />
+          <span class="base">{</span><br />
+          &nbsp;&nbsp;<span class="key">"id"</span><span class="base">:</span>
+          <span class="str">"a1b2c3d4-..."</span><span class="base">,</span
+          ><br />
+          &nbsp;&nbsp;<span class="key">"status"</span
+          ><span class="base">:</span> <span class="str">"done"</span
+          ><span class="base">,</span><br />
+          &nbsp;&nbsp;<span class="key">"sorted"</span
+          ><span class="base">:</span> <span class="str">true</span><br />
+          <span class="base">}</span>
+        </div>
+
+        <p class="section-label">Stream (SSE)</p>
+        <div class="code-block">
+          <span class="dim">GET /is-sorted/{id}/events</span>
+        </div>
+        <p style="font-size: 13px; color: #64748b; margin: 0 0 16px">
+          Emits <span class="key">status</span> events (
+          <span class="str">queued</span>, <span class="str">processing</span
+          >, <span class="str">done</span>, <span class="str">error</span>)
+          and closes the connection once the job finishes.
+        </p>
+
+        <p class="section-label">Upload a file</p>
+        <div class="code-block">
+          <span class="dim">GET /upload</span>
+        </div>
+        <div class="code-block">
+          <span class="dim">200 OK</span><br /><br />
+          <span class="base">{</span><br />
+          &nbsp;&nbsp;<span class="key">"id"</span><span class="base">:</span>
+          <span class="str">"a1b2c3d4-..."</span><span class="base">,</span
+          ><br />
+          &nbsp;&nbsp;<span class="key">"upload_url"</span
+          ><span class="base">:</span>
+          <span class="str">"https://...presigned..."</span><br />
+          <span class="base">}</span>
+        </div>
+        <p style="font-size: 13px; color: #64748b; margin: 0 0 16px">
+          PUT your list (newline or comma-separated) to
+          <span class="key">upload_url</span>, then trigger the check:
+        </p>
+        <div class="code-block">
+          <span class="dim">POST /upload/{id}/check</span><br />
+          <span class="dim">Content-Type: application/json</span><br /><br />
+          <span class="base">{</span> <span class="key">"order"</span
+          ><span class="base">:</span> <span class="str">"asc"</span>
+          <span class="base">}</span>
+        </div>
+        <div class="code-block">
+          <span class="dim">202 Accepted</span><br /><br />
+          <span class="base">{</span> <span class="key">"id"</span
+          ><span class="base">:</span> <span class="str">"a1b2c3d4-..."</span>
+          <span class="base">}</span>
+        </div>
+
+        <p class="section-label">curl</p>
+        <div class="code-block">
+          <span class="cmd">RESP</span><span class="base">=$(</span
+          ><span class="cmd">curl</span>
+          <span class="str">-s https://isitsorted.ca/upload</span
+          ><span class="base">)</span><br />
+          <span class="cmd">ID</span><span class="base">=$(</span
+          ><span class="cmd">echo</span> <span class="str">$RESP</span> | jq
+          -r .id<span class="base">)</span><br /><br />
+          <span class="cmd">curl</span>
+          <span class="str">-X PUT "$(echo $RESP | jq -r .upload_url)"</span>
+          \<br />
+          &nbsp;&nbsp;<span class="str">--data-binary @list.txt</span
+          ><br /><br />
+          <span class="cmd">curl</span>
+          <span class="str"
+            >-X POST https://isitsorted.ca/upload/$ID/check</span
+          >
+          \<br />
+          &nbsp;&nbsp;<span class="str"
+            >-H "Content-Type: application/json"</span
+          >
+          \<br />
+          &nbsp;&nbsp;<span class="str">-d '{"order":"asc"}'</span>
         </div>
       </section>
 

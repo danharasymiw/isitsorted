@@ -40,7 +40,7 @@ func (c *Counter) Values(ctx context.Context) (total, sorted, notSorted int64, e
 	sCmd := pipe.Get(ctx, sortedKey)
 	nsCmd := pipe.Get(ctx, notSortedKey)
 	_, err = pipe.Exec(ctx)
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		return 0, 0, 0, err
 	}
 
