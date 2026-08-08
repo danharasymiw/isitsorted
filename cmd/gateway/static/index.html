@@ -361,10 +361,10 @@
         </p>
         <div class="architecture-diagram">
           <svg
-            viewBox="0 0 900 420"
+            viewBox="0 0 960 500"
             xmlns="http://www.w3.org/2000/svg"
             role="img"
-            aria-label="Architecture diagram: Client, Gateway, Job Queue, Result Store, Bucket, and multiple Workers connected by data flow arrows."
+            aria-label="Architecture diagram: Client, Gateway, Job Queue, Result Store, Bucket, Workers, and Proprietary comparison operator."
           >
             <defs>
               <marker
@@ -380,53 +380,53 @@
             </defs>
 
             <!-- Client -->
-            <rect class="arch-box" x="20" y="170" width="120" height="60" rx="8" />
-            <text class="arch-label" x="80" y="205">Client</text>
+            <rect class="arch-box" x="20" y="140" width="130" height="55" rx="8" />
+            <text class="arch-label" x="85" y="173">Client</text>
 
             <!-- Gateway -->
-            <rect class="arch-box" x="220" y="170" width="120" height="60" rx="8" />
-            <text class="arch-label" x="280" y="205">Gateway</text>
+            <rect class="arch-box" x="230" y="140" width="130" height="55" rx="8" />
+            <text class="arch-label" x="295" y="173">Gateway</text>
 
             <!-- Job Queue -->
-            <rect class="arch-box" x="440" y="60" width="140" height="55" rx="8" />
-            <text class="arch-label" x="510" y="93">Job Queue</text>
+            <rect class="arch-box" x="460" y="40" width="150" height="55" rx="8" />
+            <text class="arch-label" x="535" y="73">Job Queue</text>
 
             <!-- Result Store -->
-            <rect class="arch-box" x="440" y="155" width="140" height="55" rx="8" />
-            <text class="arch-label" x="510" y="188">Result Store</text>
+            <rect class="arch-box" x="460" y="140" width="150" height="55" rx="8" />
+            <text class="arch-label" x="535" y="173">Result Store</text>
 
             <!-- Bucket -->
-            <rect class="arch-box" x="440" y="300" width="140" height="55" rx="8" />
-            <text class="arch-label" x="510" y="333">Bucket</text>
+            <rect class="arch-box" x="460" y="380" width="150" height="55" rx="8" />
+            <text class="arch-label" x="535" y="413">Bucket</text>
 
             <!-- Workers (stacked to show multiple) -->
-            <rect class="arch-box" x="710" y="108" width="130" height="55" rx="8" opacity="0.3" />
-            <rect class="arch-box" x="700" y="118" width="130" height="55" rx="8" opacity="0.5" />
-            <rect class="arch-box" x="690" y="128" width="130" height="55" rx="8" />
-            <text class="arch-label" x="755" y="161">Workers</text>
+            <rect class="arch-box" x="750" y="38" width="140" height="55" rx="8" opacity="0.3" />
+            <rect class="arch-box" x="740" y="48" width="140" height="55" rx="8" opacity="0.5" />
+            <rect class="arch-box" x="730" y="58" width="140" height="55" rx="8" />
+            <text class="arch-label" x="800" y="91">Workers</text>
+
+            <!-- Proprietary <= box -->
+            <rect class="arch-box" x="720" y="170" width="150" height="55" rx="8" />
+            <text class="arch-proprietary" x="795" y="193">Proprietary</text>
+            <text class="arch-proprietary arch-proprietary-code" x="795" y="213">&lt;=</text>
 
             <!-- Arrows -->
             <!-- Client → Gateway -->
-            <line class="arch-arrow flow-right" x1="140" y1="200" x2="220" y2="200" />
+            <line class="arch-arrow flow-right" x1="150" y1="167" x2="230" y2="167" />
             <!-- Gateway → Job Queue -->
-            <line class="arch-arrow flow-right" x1="340" y1="185" x2="440" y2="92" />
+            <line class="arch-arrow flow-right" x1="360" y1="152" x2="460" y2="72" />
             <!-- Gateway → Bucket -->
-            <line class="arch-arrow flow-right" x1="340" y1="215" x2="440" y2="320" />
+            <line class="arch-arrow flow-right" x1="360" y1="183" x2="460" y2="400" />
             <!-- Job Queue → Workers -->
-            <line class="arch-arrow flow-right" x1="580" y1="87" x2="690" y2="140" />
-            <!-- Proprietary <= box -->
-            <rect class="arch-box" x="620" y="195" width="120" height="50" rx="8" />
-            <text class="arch-proprietary" x="680" y="216">Proprietary</text>
-            <text class="arch-proprietary arch-proprietary-code" x="680" y="234">&lt;=</text>
-
+            <line class="arch-arrow flow-right" x1="610" y1="67" x2="730" y2="78" />
             <!-- Workers → Proprietary <= -->
-            <line class="arch-arrow flow-left" x1="720" y1="183" x2="700" y2="195" />
+            <line class="arch-arrow flow-left" x1="790" y1="113" x2="790" y2="170" />
             <!-- Proprietary <= → Result Store -->
-            <line class="arch-arrow flow-left" x1="620" y1="220" x2="580" y2="195" />
+            <line class="arch-arrow flow-left" x1="720" y1="197" x2="610" y2="172" />
             <!-- Workers → Bucket -->
-            <line class="arch-arrow flow-left" x1="690" y1="175" x2="580" y2="315" />
+            <line class="arch-arrow flow-left" x1="730" y1="105" x2="610" y2="395" />
             <!-- Result Store → Gateway -->
-            <line class="arch-arrow flow-left" x1="440" y1="175" x2="340" y2="195" />
+            <line class="arch-arrow flow-left" x1="460" y1="160" x2="360" y2="163" />
           </svg>
         </div>
       </section>
