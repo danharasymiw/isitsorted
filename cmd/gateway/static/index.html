@@ -106,6 +106,78 @@
         </ul>
       </section>
 
+      <!-- Architecture -->
+      <section class="architecture">
+        <p class="overline" style="text-align: center">Architecture</p>
+        <h2 style="text-align: center">Enterprise-grade infrastructure</h2>
+        <p class="architecture-subtitle">
+          A distributed, horizontally-scalable pipeline for sorting
+          verification at any scale.
+        </p>
+        <div class="architecture-diagram">
+          <svg
+            viewBox="0 0 800 400"
+            xmlns="http://www.w3.org/2000/svg"
+            role="img"
+            aria-label="Architecture diagram: Client, Gateway, Redis, Worker and Bucket connected by data flow arrows, with an SSE stream returning results to the Client."
+          >
+            <defs>
+              <marker
+                id="arrowhead"
+                markerWidth="10"
+                markerHeight="7"
+                refX="9"
+                refY="3.5"
+                orient="auto"
+              >
+                <polygon class="arch-arrowhead" points="0 0, 10 3.5, 0 7" />
+              </marker>
+              <marker
+                id="arrowhead-sse"
+                markerWidth="10"
+                markerHeight="7"
+                refX="9"
+                refY="3.5"
+                orient="auto"
+              >
+                <polygon
+                  class="arch-arrowhead-sse"
+                  points="0 0, 10 3.5, 0 7"
+                />
+              </marker>
+            </defs>
+
+            <!-- Boxes -->
+            <rect class="arch-box" x="20" y="160" width="120" height="60" rx="8" />
+            <text class="arch-label" x="80" y="195">Client</text>
+
+            <rect class="arch-box" x="220" y="160" width="120" height="60" rx="8" />
+            <text class="arch-label" x="280" y="195">Gateway</text>
+
+            <rect class="arch-box" x="420" y="60" width="120" height="60" rx="8" />
+            <text class="arch-label" x="480" y="95">Redis</text>
+
+            <rect class="arch-box" x="420" y="260" width="120" height="60" rx="8" />
+            <text class="arch-label" x="480" y="295">Bucket</text>
+
+            <rect class="arch-box" x="640" y="160" width="120" height="60" rx="8" />
+            <text class="arch-label" x="700" y="195">Worker</text>
+
+            <!-- Arrows with animated dashes showing data flow direction -->
+            <line class="arch-arrow flow-right" x1="140" y1="190" x2="220" y2="190" />
+            <line class="arch-arrow flow-right" x1="340" y1="175" x2="420" y2="95" />
+            <line class="arch-arrow flow-right" x1="340" y1="205" x2="420" y2="280" />
+            <line class="arch-arrow flow-right" x1="540" y1="90" x2="640" y2="175" />
+            <line class="arch-arrow flow-left" x1="640" y1="205" x2="540" y2="280" />
+            <line class="arch-arrow flow-left" x1="420" y1="90" x2="280" y2="170" />
+
+            <!-- SSE return path: visually distinct from the request path -->
+            <line class="arch-arrow sse-arrow" x1="220" y1="210" x2="140" y2="210" />
+            <text class="arch-annotation" x="180" y="228">SSE stream</text>
+          </svg>
+        </div>
+      </section>
+
       <!-- Form -->
       <section id="demo">
         <p class="overline">Live demo</p>

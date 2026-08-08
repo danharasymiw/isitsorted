@@ -144,6 +144,85 @@ h2 {
   font-weight: 700;
 }
 
+/* architecture diagram */
+.architecture {
+  background: #fff;
+  text-align: center;
+}
+.architecture-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  max-width: 460px;
+  margin: 0 auto 24px;
+  line-height: 1.6;
+}
+.architecture-diagram {
+  max-width: 700px;
+  margin: 0 auto;
+}
+.architecture-diagram svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.arch-box {
+  fill: #f8fafc;
+  stroke: #4f46e5;
+  stroke-width: 2;
+}
+.arch-label {
+  fill: #0f172a;
+  text-anchor: middle;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+}
+.arch-arrow {
+  stroke: #4f46e5;
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 8 4;
+  marker-end: url(#arrowhead);
+}
+.arch-arrowhead {
+  fill: #4f46e5;
+}
+.flow-right {
+  animation: dash-flow 1.2s linear infinite;
+}
+.flow-left {
+  animation: dash-flow-reverse 1.2s linear infinite;
+}
+.sse-arrow {
+  stroke: #16a34a;
+  stroke-dasharray: 4 4;
+  marker-end: url(#arrowhead-sse);
+  animation: dash-flow-reverse 0.9s linear infinite;
+}
+.arch-arrowhead-sse {
+  fill: #16a34a;
+}
+.arch-annotation {
+  fill: #16a34a;
+  text-anchor: middle;
+  font-size: 11px;
+  font-weight: 600;
+  font-style: italic;
+}
+@keyframes dash-flow {
+  to { stroke-dashoffset: -24; }
+}
+@keyframes dash-flow-reverse {
+  to { stroke-dashoffset: 24; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flow-right,
+  .flow-left,
+  .sse-arrow {
+    animation: none;
+  }
+}
+
 /* form */
 textarea {
   width: 100%;
