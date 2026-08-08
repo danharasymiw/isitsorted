@@ -178,7 +178,7 @@
             viewBox="0 0 960 500"
             xmlns="http://www.w3.org/2000/svg"
             role="img"
-            aria-label="Architecture diagram: Client, Gateway, Job Queue, Result Store, Bucket, Workers, and Proprietary comparison operator."
+            aria-label="Architecture diagram: Client, Gateway, Job Queue, Result Store, Object Store, Workers, and Proprietary comparison operator."
           >
             <defs>
               <marker
@@ -209,9 +209,9 @@
             <rect class="arch-box" x="460" y="140" width="150" height="55" rx="8" />
             <text class="arch-label" x="535" y="173">Result Store</text>
 
-            <!-- Bucket -->
+            <!-- Object Store -->
             <rect class="arch-box" x="460" y="380" width="150" height="55" rx="8" />
-            <text class="arch-label" x="535" y="413">Bucket</text>
+            <text class="arch-label" x="535" y="413">Object Store</text>
 
             <!-- Workers (stacked to show multiple) -->
             <rect class="arch-box" x="750" y="38" width="140" height="55" rx="8" opacity="0.3" />
@@ -229,7 +229,7 @@
             <line class="arch-arrow flow-right" x1="150" y1="167" x2="230" y2="167" />
             <!-- Gateway → Job Queue -->
             <line class="arch-arrow flow-right" x1="360" y1="152" x2="460" y2="72" />
-            <!-- Gateway → Bucket -->
+            <!-- Gateway → Object Store -->
             <line class="arch-arrow flow-right" x1="360" y1="183" x2="460" y2="400" />
             <!-- Job Queue → Workers -->
             <line class="arch-arrow flow-right" x1="610" y1="67" x2="730" y2="78" />
@@ -237,7 +237,7 @@
             <line class="arch-arrow flow-left" x1="790" y1="113" x2="790" y2="170" />
             <!-- Proprietary <= → Result Store -->
             <line class="arch-arrow flow-left" x1="720" y1="197" x2="610" y2="172" />
-            <!-- Workers → Bucket -->
+            <!-- Workers → Object Store -->
             <line class="arch-arrow flow-left" x1="730" y1="105" x2="610" y2="395" />
             <!-- Result Store → Gateway -->
             <line class="arch-arrow flow-left" x1="460" y1="160" x2="360" y2="163" />
