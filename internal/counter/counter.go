@@ -24,9 +24,9 @@ func New(rdb *redis.Client) *Counter {
 
 func (c *Counter) Seed(ctx context.Context, total, sorted, notSorted int64) error {
 	pipe := c.rdb.Pipeline()
-	pipe.SetNX(ctx, totalKey, total, 0)
-	pipe.SetNX(ctx, sortedKey, sorted, 0)
-	pipe.SetNX(ctx, notSortedKey, notSorted, 0)
+	pipe.Set(ctx, totalKey, total, 0)
+	pipe.Set(ctx, sortedKey, sorted, 0)
+	pipe.Set(ctx, notSortedKey, notSorted, 0)
 	_, err := pipe.Exec(ctx)
 	if err != nil && err != redis.Nil {
 		return err
