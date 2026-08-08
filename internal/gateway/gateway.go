@@ -1,6 +1,6 @@
 // Package gateway implements the HTTP gateway for the "Is It Sorted?"
 // distributed service: job submission, SSE status streaming, presigned
-// uploads, counter/activity endpoints, and the static HTMX frontend.
+// uploads, counter/activity endpoints, and the embedded static HTMX frontend.
 package gateway
 
 import (
