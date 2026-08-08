@@ -17,6 +17,7 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := r.PathValue("id")
 	ctx := r.Context()
+	html := r.Header.Get("HX-Request") == "true"
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -33,7 +34,7 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 	if status == model.StatusDone || status == model.StatusError {
 		result, err := g.queue.GetResult(ctx, id)
 		if err == nil {
-			sendSSEResult(w, flusher, result)
+			sendSSEResult(w, flusher, result, html)
 			return
 		}
 	}
@@ -43,15 +44,11 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 	events, cancel := g.pubsub.Subscribe(ctx, id)
 	defer cancel()
 
-	// Re-check status after subscribing: the job may have finished between
-	// the initial GetStatus call and the Subscribe call above, in which case
-	// the publish already happened and would otherwise be missed, forcing
-	// the client to wait out the full timeout.
 	status, _ = g.queue.GetStatus(ctx, id)
 	if status == model.StatusDone || status == model.StatusError {
 		result, err := g.queue.GetResult(ctx, id)
 		if err == nil {
-			sendSSEResult(w, flusher, result)
+			sendSSEResult(w, flusher, result, html)
 			return
 		}
 	}
@@ -72,10 +69,10 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 					Sorted: event.Sorted,
 					Error:  event.Error,
 				}
-				sendSSEResult(w, flusher, result)
+				sendSSEResult(w, flusher, result, html)
 				return
 			}
-			sendSSEStatusEvent(w, flusher, event)
+			sendSSEStatusEvent(w, flusher, event, html)
 			timeout.Reset(sseTimeout)
 		case <-timeout.C:
 			fmt.Fprintf(w, "event: error\ndata: {\"error\":\"timeout\"}\n\n")
@@ -93,21 +90,37 @@ func sendSSEStatus(w http.ResponseWriter, flusher http.Flusher, status string) {
 	flusher.Flush()
 }
 
-func sendSSEStatusEvent(w http.ResponseWriter, flusher http.Flusher, event model.StatusEvent) {
-	if event.WorkerID > 0 {
-		fmt.Fprintf(w, "event: status\ndata: <div class=\"result-card processing\">Processing on Worker #%d...</div>\n\n", event.WorkerID)
+func sendSSEStatusEvent(w http.ResponseWriter, flusher http.Flusher, event model.StatusEvent, html bool) {
+	if html {
+		if event.WorkerID > 0 {
+			fmt.Fprintf(w, "event: status\ndata: <div class=\"result-card processing\">Processing on Worker #%d...</div>\n\n", event.WorkerID)
+		} else {
+			fmt.Fprintf(w, "event: status\ndata: <div class=\"result-card processing\">Processing...</div>\n\n")
+		}
 	} else {
-		fmt.Fprintf(w, "event: status\ndata: <div class=\"result-card processing\">Processing...</div>\n\n")
+		if event.WorkerID > 0 {
+			fmt.Fprintf(w, "event: status\ndata: {\"status\":%q,\"worker_id\":%d}\n\n", event.Status, event.WorkerID)
+		} else {
+			fmt.Fprintf(w, "event: status\ndata: {\"status\":%q}\n\n", event.Status)
+		}
 	}
 	flusher.Flush()
 }
 
-func sendSSEResult(w http.ResponseWriter, flusher http.Flusher, result *model.Result) {
-	if result.Status == model.StatusDone {
-		fmt.Fprintf(w, "event: result\ndata: %s\n\n", resultHTML(result.Sorted))
-		fmt.Fprintf(w, "event: counters\ndata: refresh\n\n")
+func sendSSEResult(w http.ResponseWriter, flusher http.Flusher, result *model.Result, html bool) {
+	if html {
+		if result.Status == model.StatusDone {
+			fmt.Fprintf(w, "event: result\ndata: %s\n\n", resultHTML(result.Sorted))
+			fmt.Fprintf(w, "event: counters\ndata: refresh\n\n")
+		} else {
+			fmt.Fprintf(w, "event: result\ndata: <div class=\"result-card error\"><strong>Error:</strong> %s</div>\n\n", htmlEscape(result.Error))
+		}
 	} else {
-		fmt.Fprintf(w, "event: result\ndata: <div class=\"result-card error\"><strong>Error:</strong> %s</div>\n\n", htmlEscape(result.Error))
+		if result.Status == model.StatusDone {
+			fmt.Fprintf(w, "event: result\ndata: {\"status\":\"done\",\"sorted\":%t}\n\n", result.Sorted)
+		} else {
+			fmt.Fprintf(w, "event: result\ndata: {\"status\":\"error\",\"error\":%q}\n\n", result.Error)
+		}
 	}
 	fmt.Fprintf(w, "event: close\ndata: \n\n")
 	flusher.Flush()
