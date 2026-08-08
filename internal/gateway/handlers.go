@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -59,6 +60,7 @@ func (g *Gateway) submitHandler(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	if err := g.storage.PutList(ctx, id, []byte(listContent)); err != nil {
+		log.Printf("storage PutList error: %v", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "storage error"})
 		return
 	}
@@ -151,6 +153,22 @@ func (g *Gateway) activityHandler(w http.ResponseWriter, r *http.Request) {
 	entries, _ := g.activity.Recent(r.Context())
 	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprint(w, renderActivity(entries))
+}
+
+func (g *Gateway) debugStorageHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	testData := []byte("debug-test")
+	err := g.storage.PutState(ctx, "debug-test.txt", testData)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("put failed: %v", err)})
+		return
+	}
+	got, err := g.storage.GetState(ctx, "debug-test.txt")
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("get failed: %v", err)})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "data": string(got)})
 }
 
 func parseJSON(r *http.Request) ([]string, string, error) {
