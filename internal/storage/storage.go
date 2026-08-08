@@ -114,6 +114,34 @@ func (c *Client) GetState(ctx context.Context, key string) ([]byte, error) {
 	return c.get(ctx, "state/"+key)
 }
 
+// ListByPrefix returns all object keys with the given prefix.
+func (c *Client) ListByPrefix(ctx context.Context, prefix string) ([]string, error) {
+	var keys []string
+	paginator := s3.NewListObjectsV2Paginator(c.s3, &s3.ListObjectsV2Input{
+		Bucket: &c.bucket,
+		Prefix: &prefix,
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, obj := range page.Contents {
+			keys = append(keys, *obj.Key)
+		}
+	}
+	return keys, nil
+}
+
+// Delete removes an object by key.
+func (c *Client) Delete(ctx context.Context, key string) error {
+	_, err := c.s3.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: &c.bucket,
+		Key:    &key,
+	})
+	return err
+}
+
 // PresignPut generates a presigned URL that allows a client to directly
 // PUT the list content for the given job id, valid for ttl.
 func (c *Client) PresignPut(ctx context.Context, id string, ttl time.Duration) (string, error) {

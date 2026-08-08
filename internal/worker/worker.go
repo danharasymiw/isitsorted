@@ -47,7 +47,9 @@ func New(q *queue.Client, ps *pubsub.Client, s *storage.Client, c *counter.Count
 // until ctx is canceled.
 func (w *Worker) Run(ctx context.Context) error {
 	w.logger.Info("worker started")
+	w.counter.Seed(ctx, 622, 290, 332)
 	go w.snapshotLoop(ctx)
+	go w.cleanupLoop(ctx)
 	for {
 		job, err := w.queue.Pop(ctx, 5*time.Second)
 		if err != nil {
@@ -74,6 +76,40 @@ func (w *Worker) snapshotLoop(ctx context.Context) {
 			w.snapshotState(ctx)
 		case <-ctx.Done():
 			return
+		}
+	}
+}
+
+func (w *Worker) cleanupLoop(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			w.cleanupBucket(ctx)
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (w *Worker) cleanupBucket(ctx context.Context) {
+	for _, prefix := range []string{"lists/", "results/"} {
+		keys, err := w.storage.ListByPrefix(ctx, prefix)
+		if err != nil {
+			w.logger.Error("cleanup list failed", "prefix", prefix, "error", err)
+			continue
+		}
+		deleted := 0
+		for _, key := range keys {
+			if err := w.storage.Delete(ctx, key); err != nil {
+				w.logger.Error("cleanup delete failed", "key", key, "error", err)
+				continue
+			}
+			deleted++
+		}
+		if deleted > 0 {
+			w.logger.Info("bucket cleanup", "prefix", prefix, "deleted", deleted)
 		}
 	}
 }

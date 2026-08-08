@@ -22,6 +22,18 @@ func New(rdb *redis.Client) *Counter {
 	return &Counter{rdb: rdb}
 }
 
+func (c *Counter) Seed(ctx context.Context, total, sorted, notSorted int64) error {
+	pipe := c.rdb.Pipeline()
+	pipe.SetNX(ctx, totalKey, total, 0)
+	pipe.SetNX(ctx, sortedKey, sorted, 0)
+	pipe.SetNX(ctx, notSortedKey, notSorted, 0)
+	_, err := pipe.Exec(ctx)
+	if err != nil && err != redis.Nil {
+		return err
+	}
+	return nil
+}
+
 func (c *Counter) Increment(ctx context.Context, sorted bool) error {
 	pipe := c.rdb.Pipeline()
 	pipe.Incr(ctx, totalKey)
