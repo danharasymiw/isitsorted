@@ -27,11 +27,12 @@ type Client struct {
 
 // Config holds the connection details for the S3-compatible bucket.
 type Config struct {
-	Endpoint  string
-	Bucket    string
-	AccessKey string
-	SecretKey string
-	Region    string
+	Endpoint     string
+	Bucket       string
+	AccessKey    string
+	SecretKey    string
+	Region       string
+	UsePathStyle bool
 }
 
 // New creates a Client from the given Config. If Region is empty it
@@ -52,7 +53,7 @@ func New(ctx context.Context, cfg Config) (*Client, error) {
 
 	s3Client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String(cfg.Endpoint)
-		o.UsePathStyle = true
+		o.UsePathStyle = cfg.UsePathStyle
 	})
 
 	return &Client{
