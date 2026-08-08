@@ -94,16 +94,20 @@ func (w *Worker) cleanupLoop(ctx context.Context) {
 }
 
 func (w *Worker) cleanupBucket(ctx context.Context) {
+	cutoff := time.Now().Add(-5 * time.Minute)
 	for _, prefix := range []string{"lists/", "results/"} {
-		keys, err := w.storage.ListByPrefix(ctx, prefix)
+		objects, err := w.storage.ListByPrefix(ctx, prefix)
 		if err != nil {
 			w.logger.Error("cleanup list failed", "prefix", prefix, "error", err)
 			continue
 		}
 		deleted := 0
-		for _, key := range keys {
-			if err := w.storage.Delete(ctx, key); err != nil {
-				w.logger.Error("cleanup delete failed", "key", key, "error", err)
+		for _, obj := range objects {
+			if obj.LastModified.IsZero() || obj.LastModified.After(cutoff) {
+				continue
+			}
+			if err := w.storage.Delete(ctx, obj.Key); err != nil {
+				w.logger.Error("cleanup delete failed", "key", obj.Key, "error", err)
 				continue
 			}
 			deleted++

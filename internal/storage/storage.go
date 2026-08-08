@@ -114,9 +114,15 @@ func (c *Client) GetState(ctx context.Context, key string) ([]byte, error) {
 	return c.get(ctx, "state/"+key)
 }
 
-// ListByPrefix returns all object keys with the given prefix.
-func (c *Client) ListByPrefix(ctx context.Context, prefix string) ([]string, error) {
-	var keys []string
+// Object holds a key and its last-modified timestamp.
+type Object struct {
+	Key          string
+	LastModified time.Time
+}
+
+// ListByPrefix returns all objects with the given prefix.
+func (c *Client) ListByPrefix(ctx context.Context, prefix string) ([]Object, error) {
+	var objects []Object
 	paginator := s3.NewListObjectsV2Paginator(c.s3, &s3.ListObjectsV2Input{
 		Bucket: &c.bucket,
 		Prefix: &prefix,
@@ -127,10 +133,14 @@ func (c *Client) ListByPrefix(ctx context.Context, prefix string) ([]string, err
 			return nil, err
 		}
 		for _, obj := range page.Contents {
-			keys = append(keys, *obj.Key)
+			o := Object{Key: *obj.Key}
+			if obj.LastModified != nil {
+				o.LastModified = *obj.LastModified
+			}
+			objects = append(objects, o)
 		}
 	}
-	return keys, nil
+	return objects, nil
 }
 
 // Delete removes an object by key.
