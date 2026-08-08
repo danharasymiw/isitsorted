@@ -209,6 +209,19 @@ h2 {
   font-weight: 600;
   font-style: italic;
 }
+.arch-proprietary {
+  fill: #64748b;
+  text-anchor: middle;
+  font-size: 11px;
+  font-style: italic;
+}
+.arch-proprietary-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 14px;
+  fill: #334155;
+}
 @keyframes dash-flow {
   to { stroke-dashoffset: -24; }
 }
@@ -389,6 +402,7 @@ textarea:focus {
 }
 .code-block {
   background: #0f172a;
+  color: #e2e8f0;
   border-radius: 8px;
   padding: 12px 14px;
   font-family: monospace;
