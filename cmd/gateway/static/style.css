@@ -212,6 +212,22 @@ textarea:focus {
   background: #fef2f2;
   border-color: #fecaca;
 }
+.result-card.processing {
+  background: var(--bg-secondary, #f0f0f0);
+  border-left: 4px solid var(--accent, #6c63ff);
+  padding: 1rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
 .result-icon {
   font-size: 20px;
   line-height: 1;

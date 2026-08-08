@@ -6,6 +6,7 @@
     <title>Is It Sorted?</title>
     <link rel="stylesheet" href="/style.css" />
     <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
+    <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
   </head>
   <body>
     <div class="page">
@@ -344,5 +345,18 @@
         <p class="activity-empty">No checks yet</p>
       </div>
     </div>
+
+    <script>
+      // The async /is-sorted flow streams job status over SSE. When that
+      // stream closes (job finished), refresh the counters and activity
+      // feed, since the old inline OOB-swap approach doesn't apply here.
+      document.body.addEventListener("htmx:sseClose", function () {
+        htmx.ajax("GET", "/count", {
+          target: "#count-display",
+          swap: "innerHTML",
+        });
+        htmx.trigger(document.body, "activityUpdated");
+      });
+    </script>
   </body>
 </html>
