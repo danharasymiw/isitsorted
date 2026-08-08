@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -39,7 +40,7 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	sendSSEStatus(w, flusher, status, html)
+	sendSSEStatus(w, flusher, status, id, html)
 
 	events, cancel := g.pubsub.Subscribe(ctx, id)
 	defer cancel()
@@ -85,11 +86,11 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func sendSSEStatus(w http.ResponseWriter, flusher http.Flusher, status string, html bool) {
+func sendSSEStatus(w http.ResponseWriter, flusher http.Flusher, status string, id string, html bool) {
 	if html {
-		label := "Queued..."
+		label := fmt.Sprintf("Queued as %s...", id[:8])
 		if status == model.StatusProcessing {
-			label = "Processing..."
+			label = fmt.Sprintf("Processing on Worker #%d...", rand.Intn(5)+1)
 		}
 		fmt.Fprintf(w, "event: status\ndata: <div class=\"result-card processing\">%s</div>\n\n", label)
 	} else {

@@ -144,6 +144,8 @@ func (w *Worker) snapshotState(ctx context.Context) {
 // ProcessJob reads the job's list from the bucket, parses and checks it,
 // and records the status/result via Redis, the bucket, and pub/sub.
 func (w *Worker) ProcessJob(ctx context.Context, job *model.Job) error {
+	time.Sleep(time.Duration(250+rand.Intn(250)) * time.Millisecond)
+
 	workerID := rand.Intn(5) + 1
 	w.pubsub.Publish(ctx, job.ID, model.StatusEvent{Status: model.StatusProcessing, WorkerID: workerID})
 	w.queue.SetStatus(ctx, job.ID, model.StatusProcessing)
