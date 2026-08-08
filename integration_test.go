@@ -65,7 +65,7 @@ func TestEndToEndSortCheck(t *testing.T) {
 		SecretKey: os.Getenv("S3_SECRET_KEY"),
 	})
 	if err != nil {
-		t.Fatal(err)
+		t.Skipf("S3 not available: %v", err)
 	}
 
 	qc := queue.New(rdb)
@@ -93,9 +93,14 @@ func TestEndToEndSortCheck(t *testing.T) {
 	}
 
 	var submitResp map[string]string
-	json.NewDecoder(resp.Body).Decode(&submitResp)
+	if err := json.NewDecoder(resp.Body).Decode(&submitResp); err != nil {
+		t.Fatal(err)
+	}
 	resp.Body.Close()
-	id := submitResp["id"]
+	id, exists := submitResp["id"]
+	if !exists || id == "" {
+		t.Fatal("missing or empty id in submit response")
+	}
 
 	// Poll for result
 	var result model.Result
@@ -105,7 +110,9 @@ func TestEndToEndSortCheck(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		json.NewDecoder(resp.Body).Decode(&result)
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			t.Fatal(err)
+		}
 		resp.Body.Close()
 		if result.Status == model.StatusDone {
 			break
