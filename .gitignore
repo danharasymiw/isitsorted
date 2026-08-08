@@ -6,6 +6,8 @@
 *.so.*
 *.dylib
 sorted
+gateway
+worker
 .superpowers
 docs/superpowers
 
