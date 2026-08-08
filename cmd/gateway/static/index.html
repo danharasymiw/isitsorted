@@ -201,6 +201,78 @@
         </dl>
       </section>
 
+      <!-- Architecture -->
+      <section class="architecture">
+        <p class="overline" style="text-align: center">Architecture</p>
+        <h2 style="text-align: center">Enterprise-grade infrastructure</h2>
+        <p class="architecture-subtitle">
+          A distributed, horizontally-scalable pipeline for sorting
+          verification at any scale.
+        </p>
+        <div class="architecture-diagram">
+          <svg
+            viewBox="0 0 960 500"
+            xmlns="http://www.w3.org/2000/svg"
+            role="img"
+            aria-label="Architecture diagram: Client, Gateway, Job Queue, Result Store, Bucket, Workers, and Proprietary comparison operator."
+          >
+            <defs>
+              <marker
+                id="arrowhead"
+                markerWidth="10"
+                markerHeight="7"
+                refX="9"
+                refY="3.5"
+                orient="auto"
+              >
+                <polygon class="arch-arrowhead" points="0 0, 10 3.5, 0 7" />
+              </marker>
+            </defs>
+
+            <!-- Client -->
+            <rect class="arch-box" x="20" y="140" width="130" height="55" rx="8" />
+            <text class="arch-label" x="85" y="173">Client</text>
+
+            <!-- Gateway -->
+            <rect class="arch-box" x="230" y="140" width="130" height="55" rx="8" />
+            <text class="arch-label" x="295" y="173">Gateway</text>
+
+            <!-- Job Queue -->
+            <rect class="arch-box" x="460" y="40" width="150" height="55" rx="8" />
+            <text class="arch-label" x="535" y="73">Job Queue</text>
+
+            <!-- Result Store -->
+            <rect class="arch-box" x="460" y="140" width="150" height="55" rx="8" />
+            <text class="arch-label" x="535" y="173">Result Store</text>
+
+            <!-- Bucket -->
+            <rect class="arch-box" x="460" y="380" width="150" height="55" rx="8" />
+            <text class="arch-label" x="535" y="413">Bucket</text>
+
+            <!-- Workers (stacked to show multiple) -->
+            <rect class="arch-box" x="750" y="38" width="140" height="55" rx="8" opacity="0.3" />
+            <rect class="arch-box" x="740" y="48" width="140" height="55" rx="8" opacity="0.5" />
+            <rect class="arch-box" x="730" y="58" width="140" height="55" rx="8" />
+            <text class="arch-label" x="800" y="91">Workers</text>
+
+            <!-- Proprietary <= box -->
+            <rect class="arch-box" x="720" y="170" width="150" height="55" rx="8" />
+            <text class="arch-proprietary" x="795" y="193">Proprietary</text>
+            <text class="arch-proprietary arch-proprietary-code" x="795" y="213">&lt;=</text>
+
+            <!-- Arrows -->
+            <line class="arch-arrow flow-right" x1="150" y1="167" x2="230" y2="167" />
+            <line class="arch-arrow flow-right" x1="360" y1="152" x2="460" y2="72" />
+            <line class="arch-arrow flow-right" x1="360" y1="183" x2="460" y2="400" />
+            <line class="arch-arrow flow-right" x1="610" y1="67" x2="730" y2="78" />
+            <line class="arch-arrow flow-left" x1="790" y1="113" x2="790" y2="170" />
+            <line class="arch-arrow flow-left" x1="720" y1="197" x2="610" y2="172" />
+            <line class="arch-arrow flow-left" x1="730" y1="105" x2="610" y2="395" />
+            <line class="arch-arrow flow-left" x1="460" y1="160" x2="360" y2="163" />
+          </svg>
+        </div>
+      </section>
+
       <!-- Footer -->
       <section class="footer">
         <span class="left"
