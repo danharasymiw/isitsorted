@@ -526,3 +526,16 @@ code {
 .footer-link:hover {
   color: #64748b;
 }
+.docs-header {
+  text-align: center;
+  padding: 2rem 0 0;
+}
+.docs-home-link {
+  color: #4f46e5;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+.docs-home-link:hover {
+  text-decoration: underline;
+}

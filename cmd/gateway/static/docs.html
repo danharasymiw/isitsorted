@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Docs — Is It Sorted?</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="page">
+      <!-- Header -->
+      <section class="docs-header">
+        <a href="/" class="docs-home-link">&larr; isitsorted.ca</a>
+        <h1>Documentation</h1>
+        <p class="tagline">API reference &amp; architecture</p>
+      </section>
+
+      <!-- API Docs -->
+      <section id="api">
+        <p class="overline">JSON API</p>
+        <h2>POST /is-sorted</h2>
+        <p style="font-size: 13px; color: #64748b; margin: 0 0 16px">
+          Submit a list for sort verification. Returns a job ID. No auth required.
+        </p>
+
+        <p class="section-label">Request</p>
+        <div class="code-block">
+          <span class="dim">POST /is-sorted</span><br />
+          <span class="dim">Content-Type: application/json</span><br /><br />
+          <span class="base">{</span><br />
+          &nbsp;&nbsp;<span class="key">"list"</span
+          ><span class="base">: [</span><span class="num">1, 3, 2, 4</span
+          ><span class="base">],</span><br />
+          &nbsp;&nbsp;<span class="key">"order"</span
+          ><span class="base">: </span><span class="str">"asc"</span><br />
+          <span class="base">}</span>
+        </div>
+
+        <p class="section-label">Response</p>
+        <div class="code-block">
+          <span class="dim">202 Accepted</span><br /><br />
+          <span class="base">{</span> <span class="key">"id"</span
+          ><span class="base">:</span>
+          <span class="str">"a1b2c3d4-e5f6-7890-abcd-ef1234567890"</span>
+          <span class="base">}</span>
+        </div>
+
+        <p class="section-label">curl</p>
+        <div class="code-block">
+          <span class="cmd">JOB</span><span class="base">=$(</span
+          ><span class="cmd">curl</span>
+          <span class="str">-s -X POST https://isitsorted.ca/is-sorted</span>
+          \<br />
+          &nbsp;&nbsp;<span class="str"
+            >-H "Content-Type: application/json"</span
+          >
+          \<br />
+          &nbsp;&nbsp;<span class="str"
+            >-d '{"list":[1,2,3],"order":"asc"}'</span
+          >
+          <span class="base">)</span><br /><br />
+          <span class="cmd">curl</span>
+          <span class="str"
+            >https://isitsorted.ca/is-sorted/$(echo $JOB | jq -r .id)</span
+          >
+        </div>
+      </section>
+
+      <section id="async-api">
+        <p class="overline">JSON API</p>
+        <h2>Poll for a result</h2>
+        <p style="font-size: 13px; color: #64748b; margin: 0 0 16px">
+          Every submission is processed asynchronously by a worker. Poll the
+          job ID for status and result, or stream updates over SSE. No auth
+          required.
+        </p>
+
+        <p class="section-label">Poll</p>
+        <div class="code-block">
+          <span class="dim">GET /is-sorted/{id}</span>
+        </div>
+
+        <div class="code-block">
+          <span class="dim">200 OK</span><br /><br />
+          <span class="base">{</span><br />
+          &nbsp;&nbsp;<span class="key">"id"</span><span class="base">:</span>
+          <span class="str">"a1b2c3d4-..."</span><span class="base">,</span
+          ><br />
+          &nbsp;&nbsp;<span class="key">"status"</span
+          ><span class="base">:</span> <span class="str">"done"</span
+          ><span class="base">,</span><br />
+          &nbsp;&nbsp;<span class="key">"sorted"</span
+          ><span class="base">:</span> <span class="str">true</span><br />
+          <span class="base">}</span>
+        </div>
+
+        <p class="section-label">Stream (SSE)</p>
+        <div class="code-block">
+          <span class="dim">GET /is-sorted/{id}/events</span>
+        </div>
+        <p style="font-size: 13px; color: #64748b; margin: 0 0 16px">
+          Emits <span class="key">status</span> events (
+          <span class="str">queued</span>, <span class="str">processing</span
+          >, <span class="str">done</span>, <span class="str">error</span>)
+          and closes the connection once the job finishes.
+        </p>
+
+        <p class="section-label">Upload a file</p>
+        <div class="code-block">
+          <span class="dim">GET /upload</span>
+        </div>
+        <div class="code-block">
+          <span class="dim">200 OK</span><br /><br />
+          <span class="base">{</span><br />
+          &nbsp;&nbsp;<span class="key">"id"</span><span class="base">:</span>
+          <span class="str">"a1b2c3d4-..."</span><span class="base">,</span
+          ><br />
+          &nbsp;&nbsp;<span class="key">"upload_url"</span
+          ><span class="base">:</span>
+          <span class="str">"https://...presigned..."</span><br />
+          <span class="base">}</span>
+        </div>
+        <p style="font-size: 13px; color: #64748b; margin: 0 0 16px">
+          PUT your list (newline or comma-separated) to
+          <span class="key">upload_url</span>, then trigger the check:
+        </p>
+        <div class="code-block">
+          <span class="dim">POST /upload/{id}/check</span><br />
+          <span class="dim">Content-Type: application/json</span><br /><br />
+          <span class="base">{</span> <span class="key">"order"</span
+          ><span class="base">:</span> <span class="str">"asc"</span>
+          <span class="base">}</span>
+        </div>
+        <div class="code-block">
+          <span class="dim">202 Accepted</span><br /><br />
+          <span class="base">{</span> <span class="key">"id"</span
+          ><span class="base">:</span> <span class="str">"a1b2c3d4-..."</span>
+          <span class="base">}</span>
+        </div>
+
+        <p class="section-label">curl</p>
+        <div class="code-block">
+          <span class="cmd">RESP</span><span class="base">=$(</span
+          ><span class="cmd">curl</span>
+          <span class="str">-s https://isitsorted.ca/upload</span
+          ><span class="base">)</span><br />
+          <span class="cmd">ID</span><span class="base">=$(</span
+          ><span class="cmd">echo</span> <span class="str">$RESP</span> | jq
+          -r .id<span class="base">)</span><br /><br />
+          <span class="cmd">curl</span>
+          <span class="str">-X PUT "$(echo $RESP | jq -r .upload_url)"</span>
+          \<br />
+          &nbsp;&nbsp;<span class="str">--data-binary @list.txt</span
+          ><br /><br />
+          <span class="cmd">curl</span>
+          <span class="str"
+            >-X POST https://isitsorted.ca/upload/$ID/check</span
+          >
+          \<br />
+          &nbsp;&nbsp;<span class="str"
+            >-H "Content-Type: application/json"</span
+          >
+          \<br />
+          &nbsp;&nbsp;<span class="str">-d '{"order":"asc"}'</span>
+        </div>
+      </section>
+
+      <!-- Architecture -->
+      <section class="architecture">
+        <p class="overline" style="text-align: center">Architecture</p>
+        <h2 style="text-align: center">Enterprise-grade infrastructure</h2>
+        <p class="architecture-subtitle">
+          A distributed, horizontally-scalable pipeline for sorting
+          verification at any scale.
+        </p>
+        <div class="architecture-diagram">
+          <svg
+            viewBox="0 0 960 500"
+            xmlns="http://www.w3.org/2000/svg"
+            role="img"
+            aria-label="Architecture diagram: Client, Gateway, Job Queue, Result Store, Bucket, Workers, and Proprietary comparison operator."
+          >
+            <defs>
+              <marker
+                id="arrowhead"
+                markerWidth="10"
+                markerHeight="7"
+                refX="9"
+                refY="3.5"
+                orient="auto"
+              >
+                <polygon class="arch-arrowhead" points="0 0, 10 3.5, 0 7" />
+              </marker>
+            </defs>
+
+            <!-- Client -->
+            <rect class="arch-box" x="20" y="140" width="130" height="55" rx="8" />
+            <text class="arch-label" x="85" y="173">Client</text>
+
+            <!-- Gateway -->
+            <rect class="arch-box" x="230" y="140" width="130" height="55" rx="8" />
+            <text class="arch-label" x="295" y="173">Gateway</text>
+
+            <!-- Job Queue -->
+            <rect class="arch-box" x="460" y="40" width="150" height="55" rx="8" />
+            <text class="arch-label" x="535" y="73">Job Queue</text>
+
+            <!-- Result Store -->
+            <rect class="arch-box" x="460" y="140" width="150" height="55" rx="8" />
+            <text class="arch-label" x="535" y="173">Result Store</text>
+
+            <!-- Bucket -->
+            <rect class="arch-box" x="460" y="380" width="150" height="55" rx="8" />
+            <text class="arch-label" x="535" y="413">Bucket</text>
+
+            <!-- Workers (stacked to show multiple) -->
+            <rect class="arch-box" x="750" y="38" width="140" height="55" rx="8" opacity="0.3" />
+            <rect class="arch-box" x="740" y="48" width="140" height="55" rx="8" opacity="0.5" />
+            <rect class="arch-box" x="730" y="58" width="140" height="55" rx="8" />
+            <text class="arch-label" x="800" y="91">Workers</text>
+
+            <!-- Proprietary <= box -->
+            <rect class="arch-box" x="720" y="170" width="150" height="55" rx="8" />
+            <text class="arch-proprietary" x="795" y="193">Proprietary</text>
+            <text class="arch-proprietary arch-proprietary-code" x="795" y="213">&lt;=</text>
+
+            <!-- Arrows -->
+            <!-- Client → Gateway -->
+            <line class="arch-arrow flow-right" x1="150" y1="167" x2="230" y2="167" />
+            <!-- Gateway → Job Queue -->
+            <line class="arch-arrow flow-right" x1="360" y1="152" x2="460" y2="72" />
+            <!-- Gateway → Bucket -->
+            <line class="arch-arrow flow-right" x1="360" y1="183" x2="460" y2="400" />
+            <!-- Job Queue → Workers -->
+            <line class="arch-arrow flow-right" x1="610" y1="67" x2="730" y2="78" />
+            <!-- Workers → Proprietary <= -->
+            <line class="arch-arrow flow-left" x1="790" y1="113" x2="790" y2="170" />
+            <!-- Proprietary <= → Result Store -->
+            <line class="arch-arrow flow-left" x1="720" y1="197" x2="610" y2="172" />
+            <!-- Workers → Bucket -->
+            <line class="arch-arrow flow-left" x1="730" y1="105" x2="610" y2="395" />
+            <!-- Result Store → Gateway -->
+            <line class="arch-arrow flow-left" x1="460" y1="160" x2="360" y2="163" />
+          </svg>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <section class="footer">
+        <span class="left"
+          >&copy; 2026 isitsorted.ca &mdash; All rights reserved. Patent
+          pending.</span
+        >
+        <a href="https://status.isitsorted.ca" class="footer-link">Status</a>
+      </section>
+    </div>
+  </body>
+</html>

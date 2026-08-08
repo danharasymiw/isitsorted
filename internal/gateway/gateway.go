@@ -52,6 +52,9 @@ func (g *Gateway) Handler() http.Handler {
 	mux.HandleFunc("POST /upload/{id}/check", g.uploadCheckHandler)
 	mux.HandleFunc("GET /count", g.countHandler)
 	mux.HandleFunc("GET /activity", g.activityHandler)
+	mux.HandleFunc("GET /docs", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/docs.html", http.StatusMovedPermanently)
+	})
 
 	staticSub, err := fs.Sub(g.staticFS, "static")
 	if err != nil {
