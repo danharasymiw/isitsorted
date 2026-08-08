@@ -145,10 +145,16 @@ h2 {
 }
 
 /* architecture diagram */
+.features {
+  border-bottom: none;
+  padding-bottom: 0;
+}
 .architecture {
   background: #fff;
   text-align: center;
-  padding-top: 5rem;
+  padding-top: 4rem;
+  margin-top: 3rem;
+  border-top: none;
 }
 .architecture-subtitle {
   font-size: 13px;

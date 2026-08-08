@@ -39,7 +39,7 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	sendSSEStatus(w, flusher, status)
+	sendSSEStatus(w, flusher, status, html)
 
 	events, cancel := g.pubsub.Subscribe(ctx, id)
 	defer cancel()
@@ -85,8 +85,16 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func sendSSEStatus(w http.ResponseWriter, flusher http.Flusher, status string) {
-	fmt.Fprintf(w, "event: status\ndata: {\"status\":%q}\n\n", status)
+func sendSSEStatus(w http.ResponseWriter, flusher http.Flusher, status string, html bool) {
+	if html {
+		label := "Queued..."
+		if status == model.StatusProcessing {
+			label = "Processing..."
+		}
+		fmt.Fprintf(w, "event: status\ndata: <div class=\"result-card processing\">%s</div>\n\n", label)
+	} else {
+		fmt.Fprintf(w, "event: status\ndata: {\"status\":%q}\n\n", status)
+	}
 	flusher.Flush()
 }
 
