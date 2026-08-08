@@ -53,8 +53,6 @@ func (g *Gateway) Handler() http.Handler {
 	mux.HandleFunc("GET /count", g.countHandler)
 	mux.HandleFunc("GET /activity", g.activityHandler)
 
-	mux.HandleFunc("GET /debug/storage", g.debugStorageHandler)
-
 	staticSub, err := fs.Sub(g.staticFS, "static")
 	if err != nil {
 		staticSub = g.staticFS
