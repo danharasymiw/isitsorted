@@ -1,7 +1,4 @@
-// Package worker implements the job-processing loop that pops jobs off the
-// queue, reads list input from the bucket, runs the sort check, and
-// publishes status events and results.
-package worker
+package main
 
 import (
 	"context"

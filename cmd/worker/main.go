@@ -5,9 +5,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"sorted/internal/activity"
@@ -15,11 +18,15 @@ import (
 	"sorted/internal/pubsub"
 	"sorted/internal/queue"
 	"sorted/internal/storage"
-	"sorted/internal/worker"
 )
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8082"
+	}
 
 	redisURL := os.Getenv("REDIS_URL")
 	if redisURL == "" {
@@ -49,7 +56,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	w := worker.New(
+	w := New(
 		queue.New(rdb),
 		pubsub.New(rdb),
 		store,
@@ -58,7 +65,30 @@ func main() {
 		logger,
 	)
 
-	logger.Info("starting worker")
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /health", func(hw http.ResponseWriter, r *http.Request) {
+		hctx, hcancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer hcancel()
+
+		status := "healthy"
+		redisStatus := "ok"
+		storageStatus := "ok"
+
+		if err := rdb.Ping(hctx).Err(); err != nil {
+			redisStatus = "error"
+			status = "degraded"
+		}
+		if _, err := store.GetState(hctx, "counter.json"); err != nil {
+			storageStatus = "error"
+			status = "degraded"
+		}
+
+		hw.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(hw, `{"status":%q,"redis":%q,"storage":%q}`, status, redisStatus, storageStatus)
+	})
+	go http.ListenAndServe(":"+port, mux)
+
+	logger.Info("starting worker", "health_port", port)
 	if err := w.Run(ctx); err != nil && err != context.Canceled {
 		logger.Error("worker stopped", "error", err)
 		os.Exit(1)
