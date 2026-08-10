@@ -477,8 +477,8 @@ code {
 .activity-entry:last-child {
   border-bottom: none;
 }
-.activity-entry.yes .activity-icon { color: #16a34a; font-weight: 700; }
-.activity-entry.no .activity-icon { color: #dc2626; font-weight: 700; }
+.activity-entry.sorted .activity-icon { color: #16a34a; font-weight: 700; }
+.activity-entry:not(.sorted) .activity-icon { color: #dc2626; font-weight: 700; }
 .activity-label {
   color: #334155;
   flex: 1;
