@@ -21,14 +21,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-      minio:
-        image: bitnami/minio:latest
-        ports:
-          - 9000:9000
-        env:
-          MINIO_ROOT_USER: minioadmin
-          MINIO_ROOT_PASSWORD: minioadmin
-
     steps:
       - uses: actions/checkout@v4
 
@@ -36,15 +28,25 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data
+          # Wait for MinIO to be ready
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9000/minio/health/live && break
+            echo "Waiting for MinIO... ($i)"
+            sleep 2
+          done
+
       - name: Create S3 test bucket
         run: |
           curl -sS https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
           chmod +x /usr/local/bin/mc
-          for i in $(seq 1 30); do
-            mc alias set local http://localhost:9000 minioadmin minioadmin && break
-            echo "Waiting for MinIO... ($i)"
-            sleep 2
-          done
+          mc alias set local http://localhost:9000 minioadmin minioadmin
           mc mb local/sorted-test
 
       - name: Run unit tests
