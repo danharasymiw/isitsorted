@@ -111,15 +111,16 @@
             Enterprise-grade sorting verification
           </h2>
           <p class="architecture-subtitle">
-            Powered by a horizontally-scaled worker fleet, Redis-backed job
-            queue, S3 object storage and proprietary ≥ comparison operators.
+            Powered by a horizontally-scaled worker fleet, an internal
+            Job Service API, Redis-backed job queue, S3 object storage and
+            proprietary ≥ comparison operators.
           </p>
           <div class="architecture-diagram">
             <svg
               viewBox="0 0 1100 380"
               xmlns="http://www.w3.org/2000/svg"
               role="img"
-              aria-label="Architecture diagram: Client, Gateway, Job Queue, Result Store, Object Store, Workers, and Proprietary ≥ comparison operator."
+              aria-label="Architecture diagram: Client, Gateway, Job Service, Job Queue, Object Store, Workers, and Proprietary ≥ comparison operator."
             >
               <defs>
                 <marker
@@ -137,72 +138,72 @@
               <!-- Row 1: Job Queue (y=30) -->
               <rect
                 class="arch-box"
-                x="430"
+                x="530"
                 y="30"
                 width="150"
                 height="55"
                 rx="8"
               />
-              <text class="arch-label" x="505" y="63">Job Queue</text>
+              <text class="arch-label" x="605" y="63">Job Queue</text>
 
-              <!-- Row 2: Client, Gateway, Result Store, Workers, Proprietary (y=140) -->
+              <!-- Row 2: Client, Gateway, Job Service, Workers, Proprietary (y=140) -->
               <rect
                 class="arch-box"
-                x="20"
+                x="10"
                 y="140"
-                width="130"
+                width="120"
                 height="55"
                 rx="8"
               />
-              <text class="arch-label" x="85" y="173">Client</text>
+              <text class="arch-label" x="70" y="173">Client</text>
 
               <rect
                 class="arch-box"
-                x="220"
+                x="190"
                 y="140"
-                width="130"
+                width="120"
                 height="55"
                 rx="8"
               />
-              <text class="arch-label" x="285" y="173">Gateway</text>
+              <text class="arch-label" x="250" y="173">Gateway</text>
 
               <rect
                 class="arch-box"
-                x="430"
+                x="380"
                 y="140"
-                width="150"
-                height="55"
-                rx="8"
-              />
-              <text class="arch-label" x="505" y="173">Result Store</text>
-
-              <rect
-                class="arch-box"
-                x="680"
-                y="128"
                 width="140"
+                height="55"
+                rx="8"
+              />
+              <text class="arch-label" x="450" y="173">Job Service</text>
+
+              <rect
+                class="arch-box"
+                x="700"
+                y="128"
+                width="130"
                 height="55"
                 rx="8"
                 opacity="0.3"
               />
               <rect
                 class="arch-box"
-                x="670"
+                x="690"
                 y="138"
-                width="140"
+                width="130"
                 height="55"
                 rx="8"
                 opacity="0.5"
               />
               <rect
                 class="arch-box"
-                x="660"
+                x="680"
                 y="148"
-                width="140"
+                width="130"
                 height="55"
                 rx="8"
               />
-              <text class="arch-label" x="730" y="181">Workers</text>
+              <text class="arch-label" x="745" y="181">Workers</text>
 
               <rect
                 class="arch-box"
@@ -217,78 +218,78 @@
               <!-- Row 3: Object Store (y=280) -->
               <rect
                 class="arch-box"
-                x="430"
+                x="530"
                 y="280"
                 width="150"
                 height="55"
                 rx="8"
               />
-              <text class="arch-label" x="505" y="313">Object Store</text>
+              <text class="arch-label" x="605" y="313">Object Store</text>
 
               <!-- Arrows -->
               <!-- Client → Gateway -->
               <line
                 class="arch-arrow flow-right"
-                x1="150"
+                x1="130"
                 y1="167"
-                x2="220"
+                x2="190"
                 y2="167"
               />
-              <!-- Gateway → Job Queue -->
+              <!-- Gateway → Job Service -->
               <line
                 class="arch-arrow flow-right"
-                x1="350"
+                x1="310"
+                y1="160"
+                x2="380"
+                y2="160"
+              />
+              <!-- Job Service → Gateway (response) -->
+              <line
+                class="arch-arrow flow-left"
+                x1="380"
+                y1="175"
+                x2="310"
+                y2="175"
+              />
+              <!-- Job Service → Job Queue -->
+              <line
+                class="arch-arrow flow-right"
+                x1="520"
                 y1="152"
-                x2="430"
+                x2="530"
                 y2="62"
               />
-              <!-- Gateway → Object Store -->
+              <!-- Job Service → Object Store -->
               <line
                 class="arch-arrow flow-right"
-                x1="350"
+                x1="520"
                 y1="183"
-                x2="430"
+                x2="530"
                 y2="300"
               />
               <!-- Job Queue → Workers -->
               <line
                 class="arch-arrow flow-right"
-                x1="580"
+                x1="680"
                 y1="57"
-                x2="660"
+                x2="700"
                 y2="160"
               />
               <!-- Workers → Proprietary -->
               <line
                 class="arch-arrow flow-right"
-                x1="800"
+                x1="810"
                 y1="175"
                 x2="868"
                 y2="175"
               />
-              <!-- Workers → Result Store -->
-              <line
-                class="arch-arrow flow-left"
-                x1="660"
-                y1="170"
-                x2="580"
-                y2="167"
-              />
               <!-- Workers → Object Store -->
               <line
                 class="arch-arrow flow-left"
-                x1="660"
+                x1="680"
                 y1="190"
-                x2="580"
+                x2="680"
                 y2="295"
-              />
-              <!-- Result Store → Gateway -->
-              <line
-                class="arch-arrow flow-left"
-                x1="430"
-                y1="167"
-                x2="350"
-                y2="167"
               />
             </svg>
           </div>
