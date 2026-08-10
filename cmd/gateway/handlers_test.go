@@ -116,7 +116,7 @@ func TestStatusHandlerProxies(t *testing.T) {
 	fake := http.NewServeMux()
 	fake.HandleFunc("GET /jobs/{id}", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"id":"abc","status":"queued"}`))
+		_, _ = w.Write([]byte(`{"id":"abc","status":"queued"}`))
 	})
 	g, srv := newTestGateway(fake)
 	defer srv.Close()
@@ -153,7 +153,7 @@ func TestUploadHandlerProxies(t *testing.T) {
 	fake := http.NewServeMux()
 	fake.HandleFunc("POST /uploads", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"id":"u1","upload_url":"http://example.com/put"}`))
+		_, _ = w.Write([]byte(`{"id":"u1","upload_url":"http://example.com/put"}`))
 	})
 	g, srv := newTestGateway(fake)
 	defer srv.Close()
@@ -181,7 +181,7 @@ func TestUploadCheckHandlerDefaultsOrder(t *testing.T) {
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		gotOrder = body.Order
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(`{"id":"u1"}`))
+		_, _ = w.Write([]byte(`{"id":"u1"}`))
 	})
 	g, srv := newTestGateway(fake)
 	defer srv.Close()
@@ -203,7 +203,7 @@ func TestUploadCheckHandlerDefaultsOrder(t *testing.T) {
 func TestCountHandlerRendersHTML(t *testing.T) {
 	fake := http.NewServeMux()
 	fake.HandleFunc("GET /stats/count", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"total":1234,"sorted":600,"not_sorted":634}`))
+		_, _ = w.Write([]byte(`{"total":1234,"sorted":600,"not_sorted":634}`))
 	})
 	g, srv := newTestGateway(fake)
 	defer srv.Close()
@@ -250,7 +250,7 @@ func TestActivityHandlerEmptyFallback(t *testing.T) {
 func TestActivityHandlerSuccess(t *testing.T) {
 	fake := http.NewServeMux()
 	fake.HandleFunc("GET /stats/activity", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"entries":[{"at":"2025-01-01T00:00:00Z","sorted":true,"order":"asc","list":["1","2","3"]}]}`))
+		_, _ = w.Write([]byte(`{"entries":[{"at":"2025-01-01T00:00:00Z","sorted":true,"order":"asc","list":["1","2","3"]}]}`))
 	})
 	g, srv := newTestGateway(fake)
 	defer srv.Close()
@@ -314,7 +314,7 @@ func TestSubmitHandlerFormJobServiceError(t *testing.T) {
 	fake := http.NewServeMux()
 	fake.HandleFunc("POST /jobs", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error":"cannot parse \"xyz\""}`))
+		_, _ = w.Write([]byte(`{"error":"cannot parse \"xyz\""}`))
 	})
 	g, srv := newTestGateway(fake)
 	defer srv.Close()
@@ -341,11 +341,11 @@ func TestSubmitHandlerJSONNumericValues(t *testing.T) {
 		_ = json.NewDecoder(r.Body).Decode(&req)
 		if len(req.List) != 3 || req.List[0] != "1" || req.List[1] != "2" || req.List[2] != "3" {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"unexpected list"}`))
+			_, _ = w.Write([]byte(`{"error":"unexpected list"}`))
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(`{"id":"num-123"}`))
+		_, _ = w.Write([]byte(`{"id":"num-123"}`))
 	})
 	g, srv := newTestGateway(fake)
 	defer srv.Close()
