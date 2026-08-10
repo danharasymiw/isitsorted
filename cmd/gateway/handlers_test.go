@@ -28,7 +28,7 @@ func TestSubmitHandlerJSON(t *testing.T) {
 	fake := http.NewServeMux()
 	fake.HandleFunc("POST /jobs", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(`{"id":"abc-123"}`))
+		_, _ = w.Write([]byte(`{"id":"abc-123"}`))
 	})
 	g, srv := newTestGateway(fake)
 	defer srv.Close()
@@ -52,7 +52,7 @@ func TestSubmitHandlerForm(t *testing.T) {
 	fake := http.NewServeMux()
 	fake.HandleFunc("POST /jobs", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(`{"id":"form-id-123"}`))
+		_, _ = w.Write([]byte(`{"id":"form-id-123"}`))
 	})
 	g, srv := newTestGateway(fake)
 	defer srv.Close()
@@ -95,7 +95,7 @@ func TestSubmitHandlerJobServiceError(t *testing.T) {
 	fake := http.NewServeMux()
 	fake.HandleFunc("POST /jobs", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error":"list is required"}`))
+		_, _ = w.Write([]byte(`{"error":"list is required"}`))
 	})
 	g, srv := newTestGateway(fake)
 	defer srv.Close()

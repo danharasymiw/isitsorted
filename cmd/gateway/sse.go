@@ -29,8 +29,8 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := g.client.SSEStream(r.Context(), id)
 	if err != nil {
-		fmt.Fprintf(w, "event: error\ndata: {\"error\":\"job service unavailable\"}\n\n")
-		fmt.Fprintf(w, "event: close\ndata: \n\n")
+		_, _ = fmt.Fprintf(w, "event: error\ndata: {\"error\":\"job service unavailable\"}\n\n")
+		_, _ = fmt.Fprintf(w, "event: close\ndata: \n\n")
 		flusher.Flush()
 		return
 	}
@@ -68,7 +68,7 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 				if html {
 					g.reemitHTML(w, flusher, eventType, data, id)
 				} else {
-					fmt.Fprintf(w, "event: %s\ndata: %s\n\n", eventType, data)
+					_, _ = fmt.Fprintf(w, "event: %s\ndata: %s\n\n", eventType, data)
 					flusher.Flush()
 				}
 
@@ -77,8 +77,8 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		case <-timeout.C:
-			fmt.Fprintf(w, "event: error\ndata: {\"error\":\"timeout\"}\n\n")
-			fmt.Fprintf(w, "event: close\ndata: \n\n")
+			_, _ = fmt.Fprintf(w, "event: error\ndata: {\"error\":\"timeout\"}\n\n")
+			_, _ = fmt.Fprintf(w, "event: close\ndata: \n\n")
 			flusher.Flush()
 			return
 		case <-r.Context().Done():
@@ -94,7 +94,7 @@ func (g *Gateway) reemitHTML(w http.ResponseWriter, flusher http.Flusher, eventT
 			Status   string `json:"status"`
 			WorkerID int    `json:"worker_id"`
 		}
-		json.Unmarshal([]byte(data), &ev)
+		_ = json.Unmarshal([]byte(data), &ev)
 		short := id
 		if len(short) > 8 {
 			short = short[:8]
@@ -107,7 +107,7 @@ func (g *Gateway) reemitHTML(w http.ResponseWriter, flusher http.Flusher, eventT
 			}
 			label = fmt.Sprintf("Processing on Worker #%d...", workerID)
 		}
-		fmt.Fprintf(w, "event: status\ndata: <div class=\"result-card processing\">%s</div>\n\n", label)
+		_, _ = fmt.Fprintf(w, "event: status\ndata: <div class=\"result-card processing\">%s</div>\n\n", label)
 		flusher.Flush()
 
 	case "result":
@@ -116,22 +116,22 @@ func (g *Gateway) reemitHTML(w http.ResponseWriter, flusher http.Flusher, eventT
 			Sorted bool   `json:"sorted"`
 			Error  string `json:"error"`
 		}
-		json.Unmarshal([]byte(data), &ev)
+		_ = json.Unmarshal([]byte(data), &ev)
 		if ev.Status == "done" {
-			fmt.Fprintf(w, "event: result\ndata: %s\n\n", resultHTML(ev.Sorted))
-			fmt.Fprintf(w, "event: counters\ndata: refresh\n\n")
+			_, _ = fmt.Fprintf(w, "event: result\ndata: %s\n\n", resultHTML(ev.Sorted))
+			_, _ = fmt.Fprintf(w, "event: counters\ndata: refresh\n\n")
 		} else {
-			fmt.Fprintf(w, "event: result\ndata: <div class=\"result-card error\"><strong>Error:</strong> %s</div>\n\n", htmlEscape(ev.Error))
+			_, _ = fmt.Fprintf(w, "event: result\ndata: <div class=\"result-card error\"><strong>Error:</strong> %s</div>\n\n", htmlEscape(ev.Error))
 		}
-		fmt.Fprintf(w, "event: close\ndata: \n\n")
+		_, _ = fmt.Fprintf(w, "event: close\ndata: \n\n")
 		flusher.Flush()
 
 	case "error":
-		fmt.Fprintf(w, "event: error\ndata: %s\n\n", data)
+		_, _ = fmt.Fprintf(w, "event: error\ndata: %s\n\n", data)
 		flusher.Flush()
 
 	case "close":
-		fmt.Fprintf(w, "event: close\ndata: \n\n")
+		_, _ = fmt.Fprintf(w, "event: close\ndata: \n\n")
 		flusher.Flush()
 	}
 }

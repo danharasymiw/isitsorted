@@ -38,7 +38,7 @@ func collectSSEEvents(t *testing.T, resp *http.Response, timeout time.Duration) 
 	select {
 	case <-done:
 	case <-time.After(timeout):
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		t.Fatal("SSE stream did not close in time")
 	}
 	return events
@@ -52,7 +52,7 @@ func TestSSEJobNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	events := collectSSEEvents(t, resp, 2*time.Second)
 	if len(events) < 2 {
@@ -78,7 +78,7 @@ func TestSSEAlreadyDone(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	submitResp.Body.Close()
+	_ = submitResp.Body.Close()
 
 	// Wait for the job ID, then manually mark it done via the test's queue
 	rdb := testRedis(t)
@@ -91,14 +91,18 @@ func TestSSEAlreadyDone(t *testing.T) {
 	}
 
 	result := model.Result{ID: job.ID, Status: model.StatusDone, Sorted: true}
-	qc.SetResult(t.Context(), job.ID, result)
-	qc.SetStatus(t.Context(), job.ID, model.StatusDone)
+	if err := qc.SetResult(t.Context(), job.ID, result); err != nil {
+		t.Fatal(err)
+	}
+	if err := qc.SetStatus(t.Context(), job.ID, model.StatusDone); err != nil {
+		t.Fatal(err)
+	}
 
 	resp, err := http.Get(srv.URL + "/jobs/" + job.ID + "/events")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	events := collectSSEEvents(t, resp, 2*time.Second)
 	var gotResult, gotClose bool
@@ -127,7 +131,7 @@ func TestSSELivePubSub(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	submitResp.Body.Close()
+	_ = submitResp.Body.Close()
 
 	rdb := testRedis(t)
 	qc := testQueue(t, rdb)
@@ -143,20 +147,30 @@ func TestSSELivePubSub(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Give the SSE handler time to subscribe
 	time.Sleep(100 * time.Millisecond)
 
 	// Simulate worker: processing then done
-	qc.SetStatus(t.Context(), job.ID, model.StatusProcessing)
-	ps.Publish(t.Context(), job.ID, model.StatusEvent{Status: model.StatusProcessing, WorkerID: 1})
+	if err := qc.SetStatus(t.Context(), job.ID, model.StatusProcessing); err != nil {
+		t.Fatal(err)
+	}
+	if err := ps.Publish(t.Context(), job.ID, model.StatusEvent{Status: model.StatusProcessing, WorkerID: 1}); err != nil {
+		t.Fatal(err)
+	}
 
 	time.Sleep(50 * time.Millisecond)
 
-	qc.SetStatus(t.Context(), job.ID, model.StatusDone)
-	qc.SetResult(t.Context(), job.ID, model.Result{ID: job.ID, Status: model.StatusDone, Sorted: true})
-	ps.Publish(t.Context(), job.ID, model.StatusEvent{Status: model.StatusDone, Sorted: true})
+	if err := qc.SetStatus(t.Context(), job.ID, model.StatusDone); err != nil {
+		t.Fatal(err)
+	}
+	if err := qc.SetResult(t.Context(), job.ID, model.Result{ID: job.ID, Status: model.StatusDone, Sorted: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := ps.Publish(t.Context(), job.ID, model.StatusEvent{Status: model.StatusDone, Sorted: true}); err != nil {
+		t.Fatal(err)
+	}
 
 	events := collectSSEEvents(t, resp, 5*time.Second)
 	var gotStatus, gotResult, gotClose bool
