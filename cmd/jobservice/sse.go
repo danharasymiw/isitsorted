@@ -26,6 +26,7 @@ func (s *JobService) sseHandler(w http.ResponseWriter, r *http.Request) {
 	status, _ := s.queue.GetStatus(ctx, id)
 	if status == "" {
 		fmt.Fprintf(w, "event: error\ndata: {\"error\":\"job not found\"}\n\n")
+		fmt.Fprintf(w, "event: close\ndata: \n\n")
 		flusher.Flush()
 		return
 	}

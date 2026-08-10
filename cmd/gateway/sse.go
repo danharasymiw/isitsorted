@@ -30,6 +30,7 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 	resp, err := g.client.SSEStream(r.Context(), id)
 	if err != nil {
 		fmt.Fprintf(w, "event: error\ndata: {\"error\":\"job service unavailable\"}\n\n")
+		fmt.Fprintf(w, "event: close\ndata: \n\n")
 		flusher.Flush()
 		return
 	}
@@ -41,21 +42,21 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 	timeout := time.NewTimer(sseTimeout)
 	defer timeout.Stop()
 
+	lines := make(chan string)
+	scanDone := make(chan struct{})
+	go func() {
+		defer close(scanDone)
+		for scanner.Scan() {
+			lines <- scanner.Text()
+		}
+	}()
+
 	for {
 		select {
-		case <-timeout.C:
-			fmt.Fprintf(w, "event: error\ndata: {\"error\":\"timeout\"}\n\n")
-			fmt.Fprintf(w, "event: close\ndata: \n\n")
-			flusher.Flush()
-			return
-		case <-r.Context().Done():
-			return
-		default:
-			if !scanner.Scan() {
+		case line, ok := <-lines:
+			if !ok {
 				return
 			}
-			line := scanner.Text()
-
 			if strings.HasPrefix(line, "event: ") {
 				eventType = strings.TrimPrefix(line, "event: ")
 				continue
@@ -75,6 +76,13 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
+		case <-timeout.C:
+			fmt.Fprintf(w, "event: error\ndata: {\"error\":\"timeout\"}\n\n")
+			fmt.Fprintf(w, "event: close\ndata: \n\n")
+			flusher.Flush()
+			return
+		case <-r.Context().Done():
+			return
 		}
 	}
 }
@@ -87,7 +95,11 @@ func (g *Gateway) reemitHTML(w http.ResponseWriter, flusher http.Flusher, eventT
 			WorkerID int    `json:"worker_id"`
 		}
 		json.Unmarshal([]byte(data), &ev)
-		label := fmt.Sprintf("Queued as %s...", id[:8])
+		short := id
+		if len(short) > 8 {
+			short = short[:8]
+		}
+		label := fmt.Sprintf("Queued as %s...", short)
 		if ev.Status == "processing" {
 			workerID := ev.WorkerID
 			if workerID == 0 {
