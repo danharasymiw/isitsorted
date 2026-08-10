@@ -15,10 +15,11 @@ func testStorage(t *testing.T) *Client {
 	}
 	ctx := context.Background()
 	c, err := New(ctx, Config{
-		Endpoint:  endpoint,
-		Bucket:    os.Getenv("S3_BUCKET"),
-		AccessKey: os.Getenv("S3_ACCESS_KEY"),
-		SecretKey: os.Getenv("S3_SECRET_KEY"),
+		Endpoint:     endpoint,
+		Bucket:       os.Getenv("S3_BUCKET"),
+		AccessKey:    os.Getenv("S3_ACCESS_KEY"),
+		SecretKey:    os.Getenv("S3_SECRET_KEY"),
+		UsePathStyle: os.Getenv("S3_USE_PATH_STYLE") == "true",
 	})
 	if err != nil {
 		t.Fatalf("create storage client: %v", err)
