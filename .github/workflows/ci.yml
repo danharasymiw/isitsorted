@@ -7,7 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  unit:
+    name: Unit Tests
     runs-on: ubuntu-latest
 
     services:
@@ -35,7 +36,6 @@ jobs:
             -e MINIO_ROOT_USER=minioadmin \
             -e MINIO_ROOT_PASSWORD=minioadmin \
             minio/minio:latest server /data
-          # Wait for MinIO to be ready
           for i in $(seq 1 30); do
             curl -sf http://localhost:9000/minio/health/live && break
             echo "Waiting for MinIO... ($i)"
@@ -59,6 +59,46 @@ jobs:
           S3_USE_PATH_STYLE: "true"
         run: go test -p 1 ./... -v -count=1
 
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9000/minio/health/live && break
+            echo "Waiting for MinIO... ($i)"
+            sleep 2
+          done
+
+      - name: Create S3 test bucket
+        run: |
+          docker exec minio mc alias set local http://localhost:9000 minioadmin minioadmin
+          docker exec minio mc mb local/sorted-test
+
       - name: Run integration tests
         env:
           REDIS_URL: localhost:6379
@@ -71,5 +111,22 @@ jobs:
           S3_USE_PATH_STYLE: "true"
         run: go test -p 1 -tags integration ./... -v -count=1
 
-      - name: Vet
-        run: go vet ./...
+  vet:
+    name: Vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@v7
