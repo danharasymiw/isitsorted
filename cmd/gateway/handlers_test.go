@@ -338,7 +338,7 @@ func TestSubmitHandlerJSONNumericValues(t *testing.T) {
 			List  []string `json:"list"`
 			Order string   `json:"order"`
 		}
-		json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewDecoder(r.Body).Decode(&req)
 		if len(req.List) != 3 || req.List[0] != "1" || req.List[1] != "2" || req.List[2] != "3" {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(`{"error":"unexpected list"}`))

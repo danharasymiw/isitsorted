@@ -82,9 +82,15 @@ func TestListByPrefix(t *testing.T) {
 	c := testStorage(t)
 	ctx := context.Background()
 
-	c.PutList(ctx, "prefix-a", []byte("a"))
-	c.PutList(ctx, "prefix-b", []byte("b"))
-	c.PutResult(ctx, "other", []byte("x"))
+	if err := c.PutList(ctx, "prefix-a", []byte("a")); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.PutList(ctx, "prefix-b", []byte("b")); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.PutResult(ctx, "other", []byte("x")); err != nil {
+		t.Fatal(err)
+	}
 
 	objects, err := c.ListByPrefix(ctx, "lists/prefix-")
 	if err != nil {
@@ -106,7 +112,9 @@ func TestDelete(t *testing.T) {
 	c := testStorage(t)
 	ctx := context.Background()
 
-	c.PutList(ctx, "to-delete", []byte("data"))
+	if err := c.PutList(ctx, "to-delete", []byte("data")); err != nil {
+		t.Fatal(err)
+	}
 
 	got, err := c.GetList(ctx, "to-delete")
 	if err != nil {

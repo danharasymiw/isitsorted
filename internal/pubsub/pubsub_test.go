@@ -21,7 +21,7 @@ func testRedis(t *testing.T) *redis.Client {
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		t.Skipf("Redis not available: %v", err)
 	}
-	t.Cleanup(func() { rdb.FlushDB(ctx); rdb.Close() })
+	t.Cleanup(func() { rdb.FlushDB(ctx); _ = rdb.Close() })
 	return rdb
 }
 

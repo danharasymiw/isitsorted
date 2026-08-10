@@ -141,7 +141,7 @@ func (c *JobClient) doAndRead(req *http.Request) (int, []byte, error) {
 		slog.Error("job service request failed", "method", req.Method, "url", req.URL.String(), "error", err)
 		return 0, nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		slog.Error("job service response read failed", "method", req.Method, "url", req.URL.String(), "status", resp.StatusCode, "error", err)

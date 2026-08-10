@@ -55,7 +55,7 @@ func (c *Client) Subscribe(ctx context.Context, jobID string) (<-chan model.Stat
 	}()
 
 	cancel := func() {
-		sub.Close()
+		_ = sub.Close()
 	}
 	return ch, cancel
 }

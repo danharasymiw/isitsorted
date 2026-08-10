@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -58,7 +59,9 @@ func newUUID() string {
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		slog.Error("write json", "error", err)
+	}
 }
 
 type submitRequest struct {
@@ -123,7 +126,9 @@ func (s *JobService) submitHandler(w http.ResponseWriter, r *http.Request) {
 		Order:       req.Order,
 		SubmittedAt: time.Now(),
 	}
-	s.queue.SetStatus(ctx, id, model.StatusQueued)
+	if err := s.queue.SetStatus(ctx, id, model.StatusQueued); err != nil {
+		slog.Error("set status failed", "id", id, "error", err)
+	}
 	if err := s.queue.Push(ctx, job); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "queue error"})
 		return
@@ -199,7 +204,9 @@ func (s *JobService) uploadCheckHandler(w http.ResponseWriter, r *http.Request) 
 		Order:       body.Order,
 		SubmittedAt: time.Now(),
 	}
-	s.queue.SetStatus(ctx, id, model.StatusQueued)
+	if err := s.queue.SetStatus(ctx, id, model.StatusQueued); err != nil {
+		slog.Error("set status failed", "id", id, "error", err)
+	}
 	if err := s.queue.Push(ctx, job); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "queue error"})
 		return

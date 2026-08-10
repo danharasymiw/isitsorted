@@ -21,7 +21,7 @@ func testRedis(t *testing.T) *redis.Client {
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		t.Skipf("Redis not available: %v", err)
 	}
-	t.Cleanup(func() { rdb.FlushDB(ctx); rdb.Close() })
+	t.Cleanup(func() { rdb.FlushDB(ctx); _ = rdb.Close() })
 	return rdb
 }
 
@@ -30,8 +30,12 @@ func TestAddAndRecent(t *testing.T) {
 	l := New(rdb)
 	ctx := context.Background()
 
-	l.Add(ctx, model.ActivityEntry{At: time.Now(), Sorted: true, Order: "asc", List: []string{"1", "2"}})
-	l.Add(ctx, model.ActivityEntry{At: time.Now(), Sorted: false, Order: "desc", List: []string{"3", "1"}})
+	if err := l.Add(ctx, model.ActivityEntry{At: time.Now(), Sorted: true, Order: "asc", List: []string{"1", "2"}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := l.Add(ctx, model.ActivityEntry{At: time.Now(), Sorted: false, Order: "desc", List: []string{"3", "1"}}); err != nil {
+		t.Fatal(err)
+	}
 
 	entries, err := l.Recent(ctx)
 	if err != nil {
@@ -51,7 +55,9 @@ func TestRecentCappedAt20(t *testing.T) {
 	ctx := context.Background()
 
 	for i := 0; i < 25; i++ {
-		l.Add(ctx, model.ActivityEntry{At: time.Now(), Sorted: true, Order: "asc", List: []string{"1"}})
+		if err := l.Add(ctx, model.ActivityEntry{At: time.Now(), Sorted: true, Order: "asc", List: []string{"1"}}); err != nil {
+			t.Fatal(err)
+		}
 	}
 	entries, err := l.Recent(ctx)
 	if err != nil {

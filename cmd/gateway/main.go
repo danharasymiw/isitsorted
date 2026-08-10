@@ -138,7 +138,7 @@ func statusHandler(client *JobClient) http.HandlerFunc {
 			storageStatus = "Unknown"
 		} else {
 			var health HealthResponse
-			json.Unmarshal(body, &health)
+			_ = json.Unmarshal(body, &health)
 			if health.Redis != "ok" {
 				redisStatus = "Degraded"
 			}
@@ -165,6 +165,8 @@ func statusHandler(client *JobClient) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "text/html")
-		statusTmpl.Execute(w, data)
+		if err := statusTmpl.Execute(w, data); err != nil {
+			slog.Error("status template", "error", err)
+		}
 	}
 }

@@ -34,7 +34,7 @@ func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
 		flusher.Flush()
 		return
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	scanner := bufio.NewScanner(resp.Body)
 	var eventType string

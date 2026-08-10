@@ -28,7 +28,7 @@ func testRedis(t *testing.T) *redis.Client {
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		t.Skipf("Redis not available: %v", err)
 	}
-	t.Cleanup(func() { rdb.FlushDB(ctx); rdb.Close() })
+	t.Cleanup(func() { rdb.FlushDB(ctx); _ = rdb.Close() })
 	return rdb
 }
 
@@ -86,7 +86,7 @@ func TestSubmitJobValid(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusCreated {
 		t.Fatalf("expected 201, got %d", resp.StatusCode)
@@ -110,7 +110,7 @@ func TestSubmitJobInvalidValue(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", resp.StatusCode)
@@ -126,7 +126,7 @@ func TestSubmitJobInvalidOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", resp.StatusCode)
@@ -142,7 +142,7 @@ func TestSubmitJobMissingList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", resp.StatusCode)

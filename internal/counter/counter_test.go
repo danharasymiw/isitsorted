@@ -19,7 +19,7 @@ func testRedis(t *testing.T) *redis.Client {
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		t.Skipf("Redis not available: %v", err)
 	}
-	t.Cleanup(func() { rdb.FlushDB(ctx); rdb.Close() })
+	t.Cleanup(func() { rdb.FlushDB(ctx); _ = rdb.Close() })
 	return rdb
 }
 
@@ -28,9 +28,15 @@ func TestIncrement(t *testing.T) {
 	c := New(rdb)
 	ctx := context.Background()
 
-	c.Increment(ctx, true)
-	c.Increment(ctx, false)
-	c.Increment(ctx, true)
+	if err := c.Increment(ctx, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Increment(ctx, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Increment(ctx, true); err != nil {
+		t.Fatal(err)
+	}
 
 	total, sorted, notSorted, err := c.Values(ctx)
 	if err != nil {
@@ -76,8 +82,12 @@ func TestSeedThenIncrement(t *testing.T) {
 	c := New(rdb)
 	ctx := context.Background()
 
-	c.Seed(ctx, 10, 5, 5)
-	c.Increment(ctx, true)
+	if err := c.Seed(ctx, 10, 5, 5); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Increment(ctx, true); err != nil {
+		t.Fatal(err)
+	}
 
 	total, sorted, notSorted, err := c.Values(ctx)
 	if err != nil {

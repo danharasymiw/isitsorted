@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -20,7 +21,7 @@ func (g *Gateway) submitHandler(w http.ResponseWriter, r *http.Request) {
 	if isForm {
 		if err := r.ParseForm(); err != nil {
 			w.Header().Set("Content-Type", "text/html")
-			fmt.Fprintf(w, `<div class="result-card error"><strong>Error:</strong> %s</div>`, htmlEscape(err.Error()))
+			_, _ = fmt.Fprintf(w, `<div class="result-card error"><strong>Error:</strong> %s</div>`, htmlEscape(err.Error()))
 			return
 		}
 		listStr := r.FormValue("list")
@@ -41,7 +42,7 @@ func (g *Gateway) submitHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if len(list) == 0 {
 			w.Header().Set("Content-Type", "text/html")
-			fmt.Fprintf(w, `<div class="result-card error"><strong>Error:</strong> list is required</div>`)
+			_, _ = fmt.Fprintf(w, `<div class="result-card error"><strong>Error:</strong> list is required</div>`)
 			return
 		}
 	} else {
@@ -69,7 +70,7 @@ func (g *Gateway) submitHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if isForm {
 			w.Header().Set("Content-Type", "text/html")
-			fmt.Fprintf(w, `<div class="result-card error"><strong>Error:</strong> service unavailable</div>`)
+			_, _ = fmt.Fprintf(w, `<div class="result-card error"><strong>Error:</strong> service unavailable</div>`)
 		} else {
 			writeJSON(w, http.StatusBadGateway, map[string]string{"error": "job service unavailable"})
 		}
@@ -79,23 +80,23 @@ func (g *Gateway) submitHandler(w http.ResponseWriter, r *http.Request) {
 	if status >= 400 {
 		if isForm {
 			var errResp ErrorResponse
-			json.Unmarshal(body, &errResp)
+			_ = json.Unmarshal(body, &errResp)
 			w.Header().Set("Content-Type", "text/html")
-			fmt.Fprintf(w, `<div class="result-card error"><strong>Error:</strong> %s</div>`, htmlEscape(errResp.Error))
+			_, _ = fmt.Fprintf(w, `<div class="result-card error"><strong>Error:</strong> %s</div>`, htmlEscape(errResp.Error))
 		} else {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(status)
-			w.Write(body)
+			_, _ = w.Write(body)
 		}
 		return
 	}
 
 	var idResp IDResponse
-	json.Unmarshal(body, &idResp)
+	_ = json.Unmarshal(body, &idResp)
 
 	if isForm {
 		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprintf(w, `<div id="result" hx-ext="sse" sse-connect="/is-sorted/%s/events?format=html" sse-swap="status,result" sse-close="close">`+
+		_, _ = fmt.Fprintf(w, `<div id="result" hx-ext="sse" sse-connect="/is-sorted/%s/events?format=html" sse-swap="status,result" sse-close="close">`+
 			`<div class="result-card processing">Queued...</div>`+
 			`</div>`, idResp.ID)
 	} else {
@@ -112,7 +113,7 @@ func (g *Gateway) statusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Write(body)
+	_, _ = w.Write(body)
 }
 
 func (g *Gateway) uploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +124,7 @@ func (g *Gateway) uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Write(body)
+	_, _ = w.Write(body)
 }
 
 func (g *Gateway) uploadCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -145,39 +146,41 @@ func (g *Gateway) uploadCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Write(respBody)
+	_, _ = w.Write(respBody)
 }
 
 func (g *Gateway) countHandler(w http.ResponseWriter, r *http.Request) {
 	_, body, err := g.client.GetCount(r.Context())
 	if err != nil {
 		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(w, countHTML(0, 0, 0))
+		_, _ = fmt.Fprint(w, countHTML(0, 0, 0))
 		return
 	}
 	var count CountResponse
-	json.Unmarshal(body, &count)
+	_ = json.Unmarshal(body, &count)
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, countHTML(count.Total, count.Sorted, count.NotSorted))
+	_, _ = fmt.Fprint(w, countHTML(count.Total, count.Sorted, count.NotSorted))
 }
 
 func (g *Gateway) activityHandler(w http.ResponseWriter, r *http.Request) {
 	_, body, err := g.client.GetActivity(r.Context())
 	if err != nil {
 		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(w, `<div class="activity-empty">No checks yet</div>`)
+		_, _ = fmt.Fprint(w, `<div class="activity-empty">No checks yet</div>`)
 		return
 	}
 	var activity ActivityResponse
-	json.Unmarshal(body, &activity)
+	_ = json.Unmarshal(body, &activity)
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, renderActivity(activity.Entries))
+	_, _ = fmt.Fprint(w, renderActivity(activity.Entries))
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		slog.Error("write json", "error", err)
+	}
 }
 
 func htmlEscape(s string) string {

@@ -124,7 +124,9 @@ func (w *Worker) snapshotState(ctx context.Context) {
 	counterJSON, _ := json.Marshal(map[string]int64{
 		"count": total, "sorted": sorted, "not_sorted": notSorted,
 	})
-	w.storage.PutState(ctx, "counter.json", counterJSON)
+	if err := w.storage.PutState(ctx, "counter.json", counterJSON); err != nil {
+		w.logger.Error("snapshot counter write failed", "error", err)
+	}
 
 	entries, err := w.activity.Recent(ctx)
 	if err != nil {
@@ -132,7 +134,9 @@ func (w *Worker) snapshotState(ctx context.Context) {
 		return
 	}
 	activityJSON, _ := json.Marshal(entries)
-	w.storage.PutState(ctx, "activity.json", activityJSON)
+	if err := w.storage.PutState(ctx, "activity.json", activityJSON); err != nil {
+		w.logger.Error("snapshot activity write failed", "error", err)
+	}
 
 	w.logger.Info("state snapshot written to bucket")
 }
@@ -143,8 +147,12 @@ func (w *Worker) ProcessJob(ctx context.Context, job *model.Job) error {
 	time.Sleep(time.Duration(250+rand.Intn(250)) * time.Millisecond)
 
 	workerID := rand.Intn(5) + 1
-	w.pubsub.Publish(ctx, job.ID, model.StatusEvent{Status: model.StatusProcessing, WorkerID: workerID})
-	w.queue.SetStatus(ctx, job.ID, model.StatusProcessing)
+	if err := w.pubsub.Publish(ctx, job.ID, model.StatusEvent{Status: model.StatusProcessing, WorkerID: workerID}); err != nil {
+		w.logger.Error("publish processing status failed", "id", job.ID, "error", err)
+	}
+	if err := w.queue.SetStatus(ctx, job.ID, model.StatusProcessing); err != nil {
+		w.logger.Error("set processing status failed", "id", job.ID, "error", err)
+	}
 
 	// Simulate worker pickup delay
 	time.Sleep(time.Duration(500+rand.Intn(1500)) * time.Millisecond)
@@ -175,19 +183,31 @@ func (w *Worker) ProcessJob(ctx context.Context, job *model.Job) error {
 		Sorted: sorted,
 	}
 	resultData, _ := json.Marshal(result)
-	w.queue.SetResult(ctx, job.ID, result)
-	w.queue.SetStatus(ctx, job.ID, model.StatusDone)
-	w.storage.PutResult(ctx, job.ID, resultData)
+	if err := w.queue.SetResult(ctx, job.ID, result); err != nil {
+		w.logger.Error("set result failed", "id", job.ID, "error", err)
+	}
+	if err := w.queue.SetStatus(ctx, job.ID, model.StatusDone); err != nil {
+		w.logger.Error("set done status failed", "id", job.ID, "error", err)
+	}
+	if err := w.storage.PutResult(ctx, job.ID, resultData); err != nil {
+		w.logger.Error("put result failed", "id", job.ID, "error", err)
+	}
 
-	w.counter.Increment(ctx, sorted)
-	w.activity.Add(ctx, model.ActivityEntry{
+	if err := w.counter.Increment(ctx, sorted); err != nil {
+		w.logger.Error("increment counter failed", "id", job.ID, "error", err)
+	}
+	if err := w.activity.Add(ctx, model.ActivityEntry{
 		At:     time.Now(),
 		Sorted: sorted,
 		Order:  job.Order,
 		List:   rawList,
-	})
+	}); err != nil {
+		w.logger.Error("add activity failed", "id", job.ID, "error", err)
+	}
 
-	w.pubsub.Publish(ctx, job.ID, model.StatusEvent{Status: model.StatusDone, Sorted: sorted})
+	if err := w.pubsub.Publish(ctx, job.ID, model.StatusEvent{Status: model.StatusDone, Sorted: sorted}); err != nil {
+		w.logger.Error("publish done status failed", "id", job.ID, "error", err)
+	}
 	w.logger.Info("job completed", "id", job.ID, "sorted", sorted, "items", len(rawList))
 	return nil
 }
@@ -198,9 +218,15 @@ func (w *Worker) failJob(ctx context.Context, id string, err error) error {
 		Status: model.StatusError,
 		Error:  err.Error(),
 	}
-	w.queue.SetResult(ctx, id, result)
-	w.queue.SetStatus(ctx, id, model.StatusError)
-	w.pubsub.Publish(ctx, id, model.StatusEvent{Status: model.StatusError, Error: err.Error()})
+	if setErr := w.queue.SetResult(ctx, id, result); setErr != nil {
+		w.logger.Error("set error result failed", "id", id, "error", setErr)
+	}
+	if setErr := w.queue.SetStatus(ctx, id, model.StatusError); setErr != nil {
+		w.logger.Error("set error status failed", "id", id, "error", setErr)
+	}
+	if setErr := w.pubsub.Publish(ctx, id, model.StatusEvent{Status: model.StatusError, Error: err.Error()}); setErr != nil {
+		w.logger.Error("publish error status failed", "id", id, "error", setErr)
+	}
 	return err
 }
 

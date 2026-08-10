@@ -29,10 +29,10 @@ func renderActivity(entries []ActivityEntry) string {
 			class += " sorted"
 			icon = "check"
 		}
-		b.WriteString(fmt.Sprintf(`<div class="%s"><span class="activity-icon %s"></span>`, class, icon))
-		b.WriteString(fmt.Sprintf(`<span class="activity-list">[%s]</span>`, strings.Join(e.List, ", ")))
-		b.WriteString(fmt.Sprintf(`<span class="activity-meta">%s &middot; %s</span>`,
-			orderLabel(e.Order), timeAgo(e.At)))
+		fmt.Fprintf(&b, `<div class="%s"><span class="activity-icon %s"></span>`, class, icon)
+		fmt.Fprintf(&b, `<span class="activity-list">[%s]</span>`, strings.Join(e.List, ", "))
+		fmt.Fprintf(&b, `<span class="activity-meta">%s &middot; %s</span>`,
+			orderLabel(e.Order), timeAgo(e.At))
 		b.WriteString(`</div>`)
 	}
 	return b.String()
