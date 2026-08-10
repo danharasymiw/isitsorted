@@ -4,37 +4,62 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"golang.org/x/time/rate"
 )
 
+type ipEntry struct {
+	limiter  *rate.Limiter
+	lastSeen time.Time
+}
+
 // Limiter is an in-memory, per-IP token-bucket rate limiter. It replaces the
 // Redis-backed limiter now that the gateway no longer talks to Redis
 // directly; each gateway instance enforces its own limit independently.
+// A background goroutine evicts IPs idle for more than 5 minutes.
 type Limiter struct {
-	ips   map[string]*rate.Limiter
+	ips   map[string]*ipEntry
 	mu    sync.Mutex
 	limit rate.Limit
 	burst int
 }
 
 func NewLimiter(requestsPerMinute int) *Limiter {
-	return &Limiter{
-		ips:   make(map[string]*rate.Limiter),
+	l := &Limiter{
+		ips:   make(map[string]*ipEntry),
 		limit: rate.Limit(float64(requestsPerMinute) / 60.0),
 		burst: requestsPerMinute,
+	}
+	go l.evictLoop()
+	return l
+}
+
+func (l *Limiter) evictLoop() {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		l.mu.Lock()
+		cutoff := time.Now().Add(-5 * time.Minute)
+		for ip, entry := range l.ips {
+			if entry.lastSeen.Before(cutoff) {
+				delete(l.ips, ip)
+			}
+		}
+		l.mu.Unlock()
 	}
 }
 
 func (l *Limiter) getLimiter(ip string) *rate.Limiter {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	limiter, exists := l.ips[ip]
+	entry, exists := l.ips[ip]
 	if !exists {
-		limiter = rate.NewLimiter(l.limit, l.burst)
-		l.ips[ip] = limiter
+		entry = &ipEntry{limiter: rate.NewLimiter(l.limit, l.burst)}
+		l.ips[ip] = entry
 	}
-	return limiter
+	entry.lastSeen = time.Now()
+	return entry.limiter
 }
 
 func (l *Limiter) Allow(ip string) bool {

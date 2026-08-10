@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -86,25 +87,29 @@ func (s *JobService) sseHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendSSEStatus(w http.ResponseWriter, flusher http.Flusher, status string) {
-	fmt.Fprintf(w, "event: status\ndata: {\"status\":%q}\n\n", status)
+	data, _ := json.Marshal(map[string]string{"status": status})
+	fmt.Fprintf(w, "event: status\ndata: %s\n\n", data)
 	flusher.Flush()
 }
 
 func sendSSEStatusEvent(w http.ResponseWriter, flusher http.Flusher, event model.StatusEvent) {
+	payload := map[string]any{"status": event.Status}
 	if event.WorkerID > 0 {
-		fmt.Fprintf(w, "event: status\ndata: {\"status\":%q,\"worker_id\":%d}\n\n", event.Status, event.WorkerID)
-	} else {
-		fmt.Fprintf(w, "event: status\ndata: {\"status\":%q}\n\n", event.Status)
+		payload["worker_id"] = event.WorkerID
 	}
+	data, _ := json.Marshal(payload)
+	fmt.Fprintf(w, "event: status\ndata: %s\n\n", data)
 	flusher.Flush()
 }
 
 func sendSSEResult(w http.ResponseWriter, flusher http.Flusher, result *model.Result) {
+	var data []byte
 	if result.Status == model.StatusDone {
-		fmt.Fprintf(w, "event: result\ndata: {\"status\":\"done\",\"sorted\":%t}\n\n", result.Sorted)
+		data, _ = json.Marshal(map[string]any{"status": "done", "sorted": result.Sorted})
 	} else {
-		fmt.Fprintf(w, "event: result\ndata: {\"status\":\"error\",\"error\":%q}\n\n", result.Error)
+		data, _ = json.Marshal(map[string]any{"status": "error", "error": result.Error})
 	}
+	fmt.Fprintf(w, "event: result\ndata: %s\n\n", data)
 	fmt.Fprintf(w, "event: close\ndata: \n\n")
 	flusher.Flush()
 }

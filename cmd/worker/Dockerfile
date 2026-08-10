@@ -8,4 +8,5 @@ RUN go build -o worker ./cmd/worker
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/worker .
+EXPOSE 8082
 CMD ["./worker"]

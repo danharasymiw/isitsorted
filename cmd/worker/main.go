@@ -86,7 +86,11 @@ func main() {
 		hw.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(hw, `{"status":%q,"redis":%q,"storage":%q}`, status, redisStatus, storageStatus)
 	})
-	go http.ListenAndServe(":"+port, mux)
+	go func() {
+		if err := http.ListenAndServe(":"+port, mux); err != nil {
+			logger.Error("health server failed", "error", err)
+		}
+	}()
 
 	logger.Info("worker starting", "port", port, "addr", ":"+port)
 	if err := w.Run(ctx); err != nil && err != context.Canceled {
