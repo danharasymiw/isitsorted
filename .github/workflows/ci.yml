@@ -44,10 +44,8 @@ jobs:
 
       - name: Create S3 test bucket
         run: |
-          curl -sS https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
-          chmod +x /usr/local/bin/mc
-          mc alias set local http://localhost:9000 minioadmin minioadmin
-          mc mb local/sorted-test
+          docker exec minio mc alias set local http://localhost:9000 minioadmin minioadmin
+          docker exec minio mc mb local/sorted-test
 
       - name: Run unit tests
         env:
