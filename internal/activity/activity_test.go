@@ -62,6 +62,40 @@ func TestRecentCappedAt20(t *testing.T) {
 	}
 }
 
+func TestFormatList(t *testing.T) {
+	tests := []struct {
+		list []string
+		want string
+	}{
+		{[]string{"1", "2", "3"}, "[1, 2, 3]"},
+		{[]string{"a"}, "[a]"},
+		{nil, "[]"},
+	}
+	for _, tt := range tests {
+		got := FormatList(tt.list)
+		if got != tt.want {
+			t.Errorf("FormatList(%v) = %q, want %q", tt.list, got, tt.want)
+		}
+	}
+}
+
+func TestOrderLabel(t *testing.T) {
+	tests := []struct {
+		order string
+		want  string
+	}{
+		{"asc", "ascending"},
+		{"desc", "descending"},
+		{"", "ascending"},
+	}
+	for _, tt := range tests {
+		got := OrderLabel(tt.order)
+		if got != tt.want {
+			t.Errorf("OrderLabel(%q) = %q, want %q", tt.order, got, tt.want)
+		}
+	}
+}
+
 func TestTimeAgo(t *testing.T) {
 	tests := []struct {
 		d    time.Duration

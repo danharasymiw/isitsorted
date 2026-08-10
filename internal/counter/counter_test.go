@@ -47,6 +47,53 @@ func TestIncrement(t *testing.T) {
 	}
 }
 
+func TestSeed(t *testing.T) {
+	rdb := testRedis(t)
+	c := New(rdb)
+	ctx := context.Background()
+
+	if err := c.Seed(ctx, 100, 60, 40); err != nil {
+		t.Fatal(err)
+	}
+
+	total, sorted, notSorted, err := c.Values(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if total != 100 {
+		t.Fatalf("total: got %d, want 100", total)
+	}
+	if sorted != 60 {
+		t.Fatalf("sorted: got %d, want 60", sorted)
+	}
+	if notSorted != 40 {
+		t.Fatalf("notSorted: got %d, want 40", notSorted)
+	}
+}
+
+func TestSeedThenIncrement(t *testing.T) {
+	rdb := testRedis(t)
+	c := New(rdb)
+	ctx := context.Background()
+
+	c.Seed(ctx, 10, 5, 5)
+	c.Increment(ctx, true)
+
+	total, sorted, notSorted, err := c.Values(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if total != 11 {
+		t.Fatalf("total: got %d, want 11", total)
+	}
+	if sorted != 6 {
+		t.Fatalf("sorted: got %d, want 6", sorted)
+	}
+	if notSorted != 5 {
+		t.Fatalf("notSorted: got %d, want 5", notSorted)
+	}
+}
+
 func TestFormatCount(t *testing.T) {
 	tests := []struct {
 		n    int64

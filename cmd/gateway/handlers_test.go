@@ -247,6 +247,121 @@ func TestActivityHandlerEmptyFallback(t *testing.T) {
 	}
 }
 
+func TestActivityHandlerSuccess(t *testing.T) {
+	fake := http.NewServeMux()
+	fake.HandleFunc("GET /stats/activity", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"entries":[{"at":"2025-01-01T00:00:00Z","sorted":true,"order":"asc","list":["1","2","3"]}]}`))
+	})
+	g, srv := newTestGateway(fake)
+	defer srv.Close()
+
+	r := httptest.NewRequest("GET", "/activity", nil)
+	w := httptest.NewRecorder()
+
+	g.activityHandler(w, r)
+
+	if !strings.Contains(w.Body.String(), "activity-entry sorted") {
+		t.Fatalf("expected activity entry, got %s", w.Body.String())
+	}
+	if !strings.Contains(w.Body.String(), "1, 2, 3") {
+		t.Fatalf("expected list content, got %s", w.Body.String())
+	}
+}
+
+func TestUploadHandlerError(t *testing.T) {
+	g := &Gateway{client: NewJobClient("http://127.0.0.1:0"), limiter: NewLimiter(1000)}
+
+	r := httptest.NewRequest("GET", "/upload", nil)
+	w := httptest.NewRecorder()
+
+	g.uploadHandler(w, r)
+
+	if w.Code != http.StatusBadGateway {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusBadGateway)
+	}
+}
+
+func TestUploadCheckHandlerError(t *testing.T) {
+	g := &Gateway{client: NewJobClient("http://127.0.0.1:0"), limiter: NewLimiter(1000)}
+
+	r := httptest.NewRequest("POST", "/upload/u1/check", strings.NewReader(`{"order":"asc"}`))
+	r.SetPathValue("id", "u1")
+	w := httptest.NewRecorder()
+
+	g.uploadCheckHandler(w, r)
+
+	if w.Code != http.StatusBadGateway {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusBadGateway)
+	}
+}
+
+func TestSubmitHandlerFormServiceUnavailable(t *testing.T) {
+	g := &Gateway{client: NewJobClient("http://127.0.0.1:0"), limiter: NewLimiter(1000)}
+
+	body := "list=1%0A2%0A3&order=asc"
+	r := httptest.NewRequest("POST", "/is-sorted", strings.NewReader(body))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+
+	g.submitHandler(w, r)
+
+	if !strings.Contains(w.Body.String(), "service unavailable") {
+		t.Fatalf("expected service unavailable for form, got %s", w.Body.String())
+	}
+}
+
+func TestSubmitHandlerFormJobServiceError(t *testing.T) {
+	fake := http.NewServeMux()
+	fake.HandleFunc("POST /jobs", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error":"cannot parse \"xyz\""}`))
+	})
+	g, srv := newTestGateway(fake)
+	defer srv.Close()
+
+	body := "list=xyz&order=asc"
+	r := httptest.NewRequest("POST", "/is-sorted", strings.NewReader(body))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+
+	g.submitHandler(w, r)
+
+	if !strings.Contains(w.Body.String(), "result-card error") {
+		t.Fatalf("expected error card for form error, got %s", w.Body.String())
+	}
+}
+
+func TestSubmitHandlerJSONNumericValues(t *testing.T) {
+	fake := http.NewServeMux()
+	fake.HandleFunc("POST /jobs", func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			List  []string `json:"list"`
+			Order string   `json:"order"`
+		}
+		json.NewDecoder(r.Body).Decode(&req)
+		if len(req.List) != 3 || req.List[0] != "1" || req.List[1] != "2" || req.List[2] != "3" {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"error":"unexpected list"}`))
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(`{"id":"num-123"}`))
+	})
+	g, srv := newTestGateway(fake)
+	defer srv.Close()
+
+	body := `{"list": [1, 2, 3], "order": "asc"}`
+	r := httptest.NewRequest("POST", "/is-sorted", strings.NewReader(body))
+	r.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	g.submitHandler(w, r)
+
+	if w.Code != http.StatusAccepted {
+		t.Fatalf("status = %d, want %d; body=%s", w.Code, http.StatusAccepted, w.Body.String())
+	}
+}
+
 func TestHtmlEscape(t *testing.T) {
 	got := htmlEscape(`<script>alert("xss")</script>`)
 	if strings.Contains(got, "<script>") {

@@ -77,6 +77,54 @@ func TestPutGetState(t *testing.T) {
 	}
 }
 
+func TestListByPrefix(t *testing.T) {
+	c := testStorage(t)
+	ctx := context.Background()
+
+	c.PutList(ctx, "prefix-a", []byte("a"))
+	c.PutList(ctx, "prefix-b", []byte("b"))
+	c.PutResult(ctx, "other", []byte("x"))
+
+	objects, err := c.ListByPrefix(ctx, "lists/prefix-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(objects) != 2 {
+		t.Fatalf("got %d objects, want 2", len(objects))
+	}
+	keys := map[string]bool{}
+	for _, o := range objects {
+		keys[o.Key] = true
+	}
+	if !keys["lists/prefix-a"] || !keys["lists/prefix-b"] {
+		t.Fatalf("unexpected keys: %v", keys)
+	}
+}
+
+func TestDelete(t *testing.T) {
+	c := testStorage(t)
+	ctx := context.Background()
+
+	c.PutList(ctx, "to-delete", []byte("data"))
+
+	got, err := c.GetList(ctx, "to-delete")
+	if err != nil {
+		t.Fatal("expected object to exist before delete")
+	}
+	if string(got) != "data" {
+		t.Fatalf("got %q, want %q", got, "data")
+	}
+
+	if err := c.Delete(ctx, "lists/to-delete"); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = c.GetList(ctx, "to-delete")
+	if err == nil {
+		t.Fatal("expected error after delete")
+	}
+}
+
 func TestPresignPut(t *testing.T) {
 	c := testStorage(t)
 	ctx := context.Background()
