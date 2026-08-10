@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -137,12 +138,17 @@ func (c *JobClient) postJSON(ctx context.Context, path string, v any) (int, []by
 func (c *JobClient) doAndRead(req *http.Request) (int, []byte, error) {
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		slog.Error("job service request failed", "method", req.Method, "url", req.URL.String(), "error", err)
 		return 0, nil, err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		slog.Error("job service response read failed", "method", req.Method, "url", req.URL.String(), "status", resp.StatusCode, "error", err)
 		return resp.StatusCode, nil, err
+	}
+	if resp.StatusCode >= 500 {
+		slog.Warn("job service returned error", "method", req.Method, "url", req.URL.String(), "status", resp.StatusCode, "body", string(body))
 	}
 	return resp.StatusCode, body, nil
 }
