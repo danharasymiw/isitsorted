@@ -57,7 +57,7 @@ func main() {
 		rdb:      rdb,
 	}
 
-	logger.Info("job service starting", "port", port)
+	logger.Info("job service starting", "port", port, "addr", ":"+port)
 	if err := http.ListenAndServe(":"+port, svc.Handler()); err != nil {
 		logger.Error("server stopped", "error", err)
 		os.Exit(1)

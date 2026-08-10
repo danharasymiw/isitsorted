@@ -88,7 +88,7 @@ func main() {
 	})
 	go http.ListenAndServe(":"+port, mux)
 
-	logger.Info("starting worker", "health_port", port)
+	logger.Info("worker starting", "port", port, "addr", ":"+port)
 	if err := w.Run(ctx); err != nil && err != context.Canceled {
 		logger.Error("worker stopped", "error", err)
 		os.Exit(1)

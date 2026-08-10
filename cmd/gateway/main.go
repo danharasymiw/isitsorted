@@ -78,7 +78,7 @@ func main() {
 
 	handler := hostRouter(statusMux, gw.Handler())
 
-	logger.Info("gateway starting", "port", port, "job_service_url", jobServiceURL)
+	logger.Info("gateway starting", "port", port, "addr", ":"+port, "job_service_url", jobServiceURL)
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
 		logger.Error("server stopped", "error", err)
 		os.Exit(1)
