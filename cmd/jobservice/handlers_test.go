@@ -52,6 +52,16 @@ func testStorage(t *testing.T) *storage.Client {
 	return store
 }
 
+func testQueue(t *testing.T, rdb *redis.Client) *queue.Client {
+	t.Helper()
+	return queue.New(rdb)
+}
+
+func testPubSub(t *testing.T, rdb *redis.Client) *pubsub.Client {
+	t.Helper()
+	return pubsub.New(rdb)
+}
+
 func testServer(t *testing.T) *httptest.Server {
 	t.Helper()
 	rdb := testRedis(t)
