@@ -26,8 +26,8 @@ func (s *JobService) sseHandler(w http.ResponseWriter, r *http.Request) {
 
 	status, _ := s.queue.GetStatus(ctx, id)
 	if status == "" {
-		fmt.Fprintf(w, "event: error\ndata: {\"error\":\"job not found\"}\n\n")
-		fmt.Fprintf(w, "event: close\ndata: \n\n")
+		_, _ = fmt.Fprintf(w, "event: error\ndata: {\"error\":\"job not found\"}\n\n")
+		_, _ = fmt.Fprintf(w, "event: close\ndata: \n\n")
 		flusher.Flush()
 		return
 	}
@@ -76,8 +76,8 @@ func (s *JobService) sseHandler(w http.ResponseWriter, r *http.Request) {
 			sendSSEStatusEvent(w, flusher, event)
 			timeout.Reset(sseTimeout)
 		case <-timeout.C:
-			fmt.Fprintf(w, "event: error\ndata: {\"error\":\"timeout\"}\n\n")
-			fmt.Fprintf(w, "event: close\ndata: \n\n")
+			_, _ = fmt.Fprintf(w, "event: error\ndata: {\"error\":\"timeout\"}\n\n")
+			_, _ = fmt.Fprintf(w, "event: close\ndata: \n\n")
 			flusher.Flush()
 			return
 		case <-ctx.Done():
@@ -88,7 +88,7 @@ func (s *JobService) sseHandler(w http.ResponseWriter, r *http.Request) {
 
 func sendSSEStatus(w http.ResponseWriter, flusher http.Flusher, status string) {
 	data, _ := json.Marshal(map[string]string{"status": status})
-	fmt.Fprintf(w, "event: status\ndata: %s\n\n", data)
+	_, _ = fmt.Fprintf(w, "event: status\ndata: %s\n\n", data)
 	flusher.Flush()
 }
 
@@ -98,7 +98,7 @@ func sendSSEStatusEvent(w http.ResponseWriter, flusher http.Flusher, event model
 		payload["worker_id"] = event.WorkerID
 	}
 	data, _ := json.Marshal(payload)
-	fmt.Fprintf(w, "event: status\ndata: %s\n\n", data)
+	_, _ = fmt.Fprintf(w, "event: status\ndata: %s\n\n", data)
 	flusher.Flush()
 }
 
@@ -109,7 +109,7 @@ func sendSSEResult(w http.ResponseWriter, flusher http.Flusher, result *model.Re
 	} else {
 		data, _ = json.Marshal(map[string]any{"status": "error", "error": result.Error})
 	}
-	fmt.Fprintf(w, "event: result\ndata: %s\n\n", data)
-	fmt.Fprintf(w, "event: close\ndata: \n\n")
+	_, _ = fmt.Fprintf(w, "event: result\ndata: %s\n\n", data)
+	_, _ = fmt.Fprintf(w, "event: close\ndata: \n\n")
 	flusher.Flush()
 }

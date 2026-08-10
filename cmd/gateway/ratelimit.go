@@ -75,7 +75,7 @@ func (l *Limiter) Middleware(next http.Handler) http.Handler {
 		if !l.Allow(ip) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusTooManyRequests)
-			w.Write([]byte(`{"error":"rate limit exceeded"}`))
+			_, _ = w.Write([]byte(`{"error":"rate limit exceeded"}`))
 			return
 		}
 		next.ServeHTTP(w, r)

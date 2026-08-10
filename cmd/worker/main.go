@@ -84,7 +84,7 @@ func main() {
 		}
 
 		hw.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(hw, `{"status":%q,"redis":%q,"storage":%q}`, status, redisStatus, storageStatus)
+		_, _ = fmt.Fprintf(hw, `{"status":%q,"redis":%q,"storage":%q}`, status, redisStatus, storageStatus)
 	})
 	go func() {
 		if err := http.ListenAndServe(":"+port, mux); err != nil {
