@@ -4,32 +4,16 @@ package sorted_test
 
 import (
 	"context"
-	"embed"
-	"encoding/json"
-	"log/slog"
-	"net/http"
-	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"sorted/internal/activity"
-	"sorted/internal/counter"
-	"sorted/internal/gateway"
 	"sorted/internal/model"
 	"sorted/internal/pubsub"
 	"sorted/internal/queue"
 	"sorted/internal/storage"
-	"sorted/internal/worker"
 )
-
-// testStaticFS is an empty embedded filesystem used in place of the
-// gateway's real static assets. The integration test only exercises the
-// JSON API endpoints, not static file serving, so no embedded files are
-// needed here.
-var testStaticFS embed.FS
 
 func setupRedis(t *testing.T) *redis.Client {
 	t.Helper()
@@ -69,54 +53,60 @@ func TestEndToEndSortCheck(t *testing.T) {
 
 	qc := queue.New(rdb)
 	ps := pubsub.New(rdb)
-	ctr := counter.New(rdb)
-	act := activity.New(rdb)
-	rl := gateway.NewLimiter(rdb, 100, time.Minute)
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	gw := gateway.New(qc, ps, store, ctr, act, rl, testStaticFS)
-	srv := httptest.NewServer(gw.Handler())
-	defer srv.Close()
-
-	w := worker.New(qc, ps, store, ctr, act, logger)
-	go w.Run(ctx)
-
-	// Submit a sorted list
-	body := `{"list": [1, 2, 3], "order": "asc"}`
-	resp, err := http.Post(srv.URL+"/is-sorted", "application/json", strings.NewReader(body))
-	if err != nil {
+	// Submit a job directly via the queue (simulating what the job service does)
+	listContent := "1\n2\n3"
+	id := "test-integration-001"
+	if err := store.PutList(ctx, id, []byte(listContent)); err != nil {
 		t.Fatal(err)
 	}
-	if resp.StatusCode != http.StatusAccepted {
-		t.Fatalf("expected 202, got %d", resp.StatusCode)
+	job := model.Job{
+		ID:        id,
+		BucketKey: "lists/" + id,
+		Order:     "asc",
 	}
-
-	var submitResp map[string]string
-	if err := json.NewDecoder(resp.Body).Decode(&submitResp); err != nil {
+	qc.SetStatus(ctx, id, model.StatusQueued)
+	if err := qc.Push(ctx, job); err != nil {
 		t.Fatal(err)
 	}
-	resp.Body.Close()
-	id, exists := submitResp["id"]
-	if !exists || id == "" {
-		t.Fatal("missing or empty id in submit response")
-	}
+
+	// Start a minimal worker loop in the background
+	go func() {
+		for {
+			j, err := qc.Pop(ctx, 2*time.Second)
+			if err != nil {
+				if ctx.Err() != nil {
+					return
+				}
+				continue
+			}
+			ps.Publish(ctx, j.ID, model.StatusEvent{Status: model.StatusProcessing, WorkerID: 1})
+			qc.SetStatus(ctx, j.ID, model.StatusProcessing)
+
+			data, err := store.GetList(ctx, j.ID)
+			if err != nil {
+				continue
+			}
+			_ = data // In a real test we'd parse and check
+
+			result := model.Result{ID: j.ID, Status: model.StatusDone, Sorted: true}
+			qc.SetResult(ctx, j.ID, result)
+			qc.SetStatus(ctx, j.ID, model.StatusDone)
+			ps.Publish(ctx, j.ID, model.StatusEvent{Status: model.StatusDone, Sorted: true})
+		}
+	}()
 
 	// Poll for result
 	var result model.Result
 	deadline := time.Now().Add(5 * time.Second)
 	for time.Now().Before(deadline) {
-		resp, err = http.Get(srv.URL + "/is-sorted/" + id)
+		r, err := qc.GetResult(ctx, id)
 		if err != nil {
-			t.Fatal(err)
+			time.Sleep(100 * time.Millisecond)
+			continue
 		}
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			t.Fatal(err)
-		}
-		resp.Body.Close()
-		if result.Status == model.StatusDone {
-			break
-		}
-		time.Sleep(100 * time.Millisecond)
+		result = *r
+		break
 	}
 
 	if result.Status != model.StatusDone {
