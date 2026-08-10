@@ -1,11 +1,13 @@
-// Command gateway runs the HTTP-facing "Is It Sorted?" API: job submission,
-// SSE status streaming, presigned uploads, counter/activity endpoints, the
-// embedded static HTMX frontend, and a host-routed status page.
+// Command gateway runs the public-facing "Is It Sorted?" HTTP API. It is a
+// thin proxy: it renders HTML for HTMX clients and forwards everything else
+// to the job service over HTTP. It holds no direct dependency on Redis or
+// S3 — those live behind the job service now.
 package main
 
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -13,18 +15,41 @@ import (
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/redis/go-redis/v9"
-	"sorted/internal/activity"
-	"sorted/internal/counter"
-	"sorted/internal/gateway"
-	"sorted/internal/pubsub"
-	"sorted/internal/queue"
-	"sorted/internal/storage"
 )
 
 //go:embed static
 var staticFS embed.FS
+
+// Gateway holds the dependencies needed to serve the public HTTP API.
+type Gateway struct {
+	client   *JobClient
+	limiter  *Limiter
+	staticFS embed.FS
+}
+
+// Handler builds the top-level HTTP handler for the gateway.
+func (g *Gateway) Handler() http.Handler {
+	mux := http.NewServeMux()
+
+	mux.Handle("POST /is-sorted", g.limiter.Middleware(http.HandlerFunc(g.submitHandler)))
+	mux.HandleFunc("GET /is-sorted/{id}", g.statusHandler)
+	mux.HandleFunc("GET /is-sorted/{id}/events", g.sseHandler)
+	mux.HandleFunc("GET /upload", g.uploadHandler)
+	mux.HandleFunc("POST /upload/{id}/check", g.uploadCheckHandler)
+	mux.HandleFunc("GET /count", g.countHandler)
+	mux.HandleFunc("GET /activity", g.activityHandler)
+	mux.HandleFunc("GET /docs", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/docs.html", http.StatusMovedPermanently)
+	})
+
+	staticSub, err := fs.Sub(g.staticFS, "static")
+	if err != nil {
+		staticSub = g.staticFS
+	}
+	mux.Handle("GET /", http.FileServerFS(staticSub))
+
+	return mux
+}
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -34,50 +59,21 @@ func main() {
 		port = "8080"
 	}
 
-	redisURL := os.Getenv("REDIS_URL")
-	if redisURL == "" {
-		logger.Error("REDIS_URL is required")
+	jobServiceURL := os.Getenv("JOB_SERVICE_URL")
+	if jobServiceURL == "" {
+		logger.Error("JOB_SERVICE_URL is required")
 		os.Exit(1)
 	}
 
-	opts, err := redis.ParseURL(redisURL)
-	if err != nil {
-		logger.Error("invalid REDIS_URL", "error", err)
-		os.Exit(1)
-	}
-	rdb := redis.NewClient(opts)
-
-	ctx := context.Background()
-	store, err := storage.New(ctx, storage.Config{
-		Endpoint:     os.Getenv("S3_ENDPOINT"),
-		Bucket:       os.Getenv("S3_BUCKET"),
-		AccessKey:    os.Getenv("S3_ACCESS_KEY_ID"),
-		SecretKey:    os.Getenv("S3_SECRET_ACCESS_KEY"),
-		UsePathStyle: os.Getenv("S3_USE_PATH_STYLE") == "true",
-	})
-	if err != nil {
-		logger.Error("failed to create storage client", "error", err)
-		os.Exit(1)
+	gw := &Gateway{
+		client:   NewJobClient(jobServiceURL),
+		limiter:  NewLimiter(100),
+		staticFS: staticFS,
 	}
 
-	gw := gateway.New(
-		queue.New(rdb),
-		pubsub.New(rdb),
-		store,
-		counter.New(rdb),
-		activity.New(rdb),
-		gateway.NewLimiter(rdb, 100, time.Minute),
-		staticFS,
-	)
-
-	// Status page handler (host-routed on status.*)
-	staticSub, err := fs.Sub(staticFS, "static")
-	if err != nil {
-		logger.Error("failed to load static assets", "error", err)
-		os.Exit(1)
-	}
 	statusMux := http.NewServeMux()
-	statusMux.HandleFunc("GET /", statusHandler(rdb, store))
+	staticSub, _ := fs.Sub(staticFS, "static")
+	statusMux.HandleFunc("GET /", statusHandler(gw.client))
 	statusMux.Handle("GET /status.css", http.FileServerFS(staticSub))
 
 	handler := hostRouter(statusMux, gw.Handler())
@@ -125,19 +121,30 @@ func init() {
 	}).Parse(string(f)))
 }
 
-func statusHandler(rdb *redis.Client, store *storage.Client) http.HandlerFunc {
+func statusHandler(client *JobClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
 
+		jobServiceStatus := "Operational"
 		redisStatus := "Operational"
-		if err := rdb.Ping(ctx).Err(); err != nil {
-			redisStatus = "Degraded"
-		}
+		storageStatus := "Operational"
+		workerStatus := "Operational"
 
-		bucketStatus := "Operational"
-		if _, err := store.GetState(ctx, "counter.json"); err != nil {
-			bucketStatus = "Degraded"
+		_, body, err := client.Health(ctx)
+		if err != nil {
+			jobServiceStatus = "Degraded"
+			redisStatus = "Unknown"
+			storageStatus = "Unknown"
+		} else {
+			var health HealthResponse
+			json.Unmarshal(body, &health)
+			if health.Redis != "ok" {
+				redisStatus = "Degraded"
+			}
+			if health.Storage != "ok" {
+				storageStatus = "Degraded"
+			}
 		}
 
 		days := make([]statusDay, 90)
@@ -150,10 +157,10 @@ func statusHandler(rdb *redis.Client, store *storage.Client) http.HandlerFunc {
 			Days: days,
 			Components: []componentStatus{
 				{Name: "API Gateway", Status: "Operational"},
-				{Name: "Worker", Status: "Operational"},
+				{Name: "Job Service", Status: jobServiceStatus},
+				{Name: "Worker", Status: workerStatus},
 				{Name: "Redis", Status: redisStatus},
-				{Name: "Object Storage", Status: bucketStatus},
-				{Name: "Website", Status: "Operational"},
+				{Name: "Object Storage", Status: storageStatus},
 			},
 		}
 

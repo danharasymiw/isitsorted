@@ -1,12 +1,9 @@
-package gateway
+package main
 
 import (
 	"fmt"
 	"strings"
-
-	"sorted/internal/activity"
-	"sorted/internal/counter"
-	"sorted/internal/model"
+	"time"
 )
 
 func resultHTML(sorted bool) string {
@@ -20,7 +17,7 @@ func resultHTML(sorted bool) string {
 		`</span><div><strong>Nope, not sorted.</strong></div></div>`
 }
 
-func renderActivity(entries []model.ActivityEntry) string {
+func renderActivity(entries []ActivityEntry) string {
 	if len(entries) == 0 {
 		return `<div class="activity-empty">No checks yet</div>`
 	}
@@ -33,9 +30,9 @@ func renderActivity(entries []model.ActivityEntry) string {
 			icon = "check"
 		}
 		b.WriteString(fmt.Sprintf(`<div class="%s"><span class="activity-icon %s"></span>`, class, icon))
-		b.WriteString(fmt.Sprintf(`<span class="activity-list">%s</span>`, activity.FormatList(e.List)))
+		b.WriteString(fmt.Sprintf(`<span class="activity-list">[%s]</span>`, strings.Join(e.List, ", ")))
 		b.WriteString(fmt.Sprintf(`<span class="activity-meta">%s &middot; %s</span>`,
-			activity.OrderLabel(e.Order), activity.TimeAgo(e.At)))
+			orderLabel(e.Order), timeAgo(e.At)))
 		b.WriteString(`</div>`)
 	}
 	return b.String()
@@ -43,7 +40,45 @@ func renderActivity(entries []model.ActivityEntry) string {
 
 func countHTML(total, sorted, notSorted int64) string {
 	return fmt.Sprintf(`%s<div id="sorted-count-display" hx-swap-oob="innerHTML">%s</div><div id="not-sorted-count-display" hx-swap-oob="innerHTML">%s</div>`,
-		counter.FormatCount(total),
-		counter.FormatCount(sorted),
-		counter.FormatCount(notSorted))
+		formatCount(total),
+		formatCount(sorted),
+		formatCount(notSorted))
+}
+
+func formatCount(n int64) string {
+	s := fmt.Sprintf("%d", n)
+	if n < 0 {
+		return s
+	}
+	var b strings.Builder
+	for i, ch := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			b.WriteByte(',')
+		}
+		b.WriteRune(ch)
+	}
+	return b.String()
+}
+
+func timeAgo(t time.Time) string {
+	d := time.Since(t)
+	switch {
+	case d < time.Second:
+		return "just now"
+	case d < time.Minute:
+		return fmt.Sprintf("%ds ago", int(d.Seconds()))
+	case d < time.Hour:
+		return fmt.Sprintf("%dm ago", int(d.Minutes()))
+	case d < 24*time.Hour:
+		return fmt.Sprintf("%dh ago", int(d.Hours()))
+	default:
+		return fmt.Sprintf("%dd ago", int(d.Hours()/24))
+	}
+}
+
+func orderLabel(order string) string {
+	if order == "desc" {
+		return "descending"
+	}
+	return "ascending"
 }

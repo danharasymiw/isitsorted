@@ -1,0 +1,125 @@
+package main
+
+import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"math/rand"
+	"net/http"
+	"strings"
+	"time"
+)
+
+const sseTimeout = 30 * time.Second
+
+func (g *Gateway) sseHandler(w http.ResponseWriter, r *http.Request) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "streaming not supported", http.StatusInternalServerError)
+		return
+	}
+
+	id := r.PathValue("id")
+	html := r.URL.Query().Get("format") == "html"
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+
+	resp, err := g.client.SSEStream(r.Context(), id)
+	if err != nil {
+		fmt.Fprintf(w, "event: error\ndata: {\"error\":\"job service unavailable\"}\n\n")
+		flusher.Flush()
+		return
+	}
+	defer resp.Body.Close()
+
+	scanner := bufio.NewScanner(resp.Body)
+	var eventType string
+
+	timeout := time.NewTimer(sseTimeout)
+	defer timeout.Stop()
+
+	for {
+		select {
+		case <-timeout.C:
+			fmt.Fprintf(w, "event: error\ndata: {\"error\":\"timeout\"}\n\n")
+			fmt.Fprintf(w, "event: close\ndata: \n\n")
+			flusher.Flush()
+			return
+		case <-r.Context().Done():
+			return
+		default:
+			if !scanner.Scan() {
+				return
+			}
+			line := scanner.Text()
+
+			if strings.HasPrefix(line, "event: ") {
+				eventType = strings.TrimPrefix(line, "event: ")
+				continue
+			}
+			if strings.HasPrefix(line, "data: ") {
+				data := strings.TrimPrefix(line, "data: ")
+				timeout.Reset(sseTimeout)
+
+				if html {
+					g.reemitHTML(w, flusher, eventType, data, id)
+				} else {
+					fmt.Fprintf(w, "event: %s\ndata: %s\n\n", eventType, data)
+					flusher.Flush()
+				}
+
+				if eventType == "close" {
+					return
+				}
+			}
+		}
+	}
+}
+
+func (g *Gateway) reemitHTML(w http.ResponseWriter, flusher http.Flusher, eventType, data, id string) {
+	switch eventType {
+	case "status":
+		var ev struct {
+			Status   string `json:"status"`
+			WorkerID int    `json:"worker_id"`
+		}
+		json.Unmarshal([]byte(data), &ev)
+		label := fmt.Sprintf("Queued as %s...", id[:8])
+		if ev.Status == "processing" {
+			workerID := ev.WorkerID
+			if workerID == 0 {
+				workerID = rand.Intn(5) + 1
+			}
+			label = fmt.Sprintf("Processing on Worker #%d...", workerID)
+		}
+		fmt.Fprintf(w, "event: status\ndata: <div class=\"result-card processing\">%s</div>\n\n", label)
+		flusher.Flush()
+
+	case "result":
+		var ev struct {
+			Status string `json:"status"`
+			Sorted bool   `json:"sorted"`
+			Error  string `json:"error"`
+		}
+		json.Unmarshal([]byte(data), &ev)
+		if ev.Status == "done" {
+			fmt.Fprintf(w, "event: result\ndata: %s\n\n", resultHTML(ev.Sorted))
+			fmt.Fprintf(w, "event: counters\ndata: refresh\n\n")
+		} else {
+			fmt.Fprintf(w, "event: result\ndata: <div class=\"result-card error\"><strong>Error:</strong> %s</div>\n\n", htmlEscape(ev.Error))
+		}
+		fmt.Fprintf(w, "event: close\ndata: \n\n")
+		flusher.Flush()
+
+	case "error":
+		fmt.Fprintf(w, "event: error\ndata: %s\n\n", data)
+		flusher.Flush()
+
+	case "close":
+		fmt.Fprintf(w, "event: close\ndata: \n\n")
+		flusher.Flush()
+	}
+}
