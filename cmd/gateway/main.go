@@ -150,7 +150,7 @@ func statusHandler(client *JobClient) http.HandlerFunc {
 		days := make([]statusDay, 90)
 		now := time.Now()
 		for i := range days {
-			days[i] = statusDay{Date: now.AddDate(0, 0, -i).Format("2006-01-02")}
+			days[i] = statusDay{Date: now.AddDate(0, 0, i-89).Format("2006-01-02")}
 		}
 
 		data := statusData{
