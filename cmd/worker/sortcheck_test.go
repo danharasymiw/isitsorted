@@ -126,3 +126,42 @@ func TestCheckRanges(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckInfinity(t *testing.T) {
+	pt := func(n int64) *parser.Value {
+		return parser.PointValue(new(big.Rat).SetInt64(n))
+	}
+	posInf := parser.InfValue(1)
+	negInf := parser.InfValue(-1)
+
+	tests := []struct {
+		name  string
+		list  []*parser.Value
+		order string
+		want  bool
+	}{
+		{"neg inf to pos inf asc", []*parser.Value{negInf, pt(0), posInf}, "asc", true},
+		{"neg inf start asc", []*parser.Value{negInf, pt(-100), pt(0)}, "asc", true},
+		{"pos inf end asc", []*parser.Value{pt(0), pt(100), posInf}, "asc", true},
+		{"pos inf wrong position asc", []*parser.Value{posInf, pt(0)}, "asc", false},
+		{"neg inf wrong position asc", []*parser.Value{pt(0), negInf}, "asc", false},
+		{"pos inf to neg inf desc", []*parser.Value{posInf, pt(0), negInf}, "desc", true},
+		{"pos inf start desc", []*parser.Value{posInf, pt(100), pt(0)}, "desc", true},
+		{"neg inf end desc", []*parser.Value{pt(0), pt(-100), negInf}, "desc", true},
+		{"neg inf wrong position desc", []*parser.Value{negInf, pt(0)}, "desc", false},
+		{"two pos inf asc", []*parser.Value{posInf, posInf}, "asc", true},
+		{"two neg inf asc", []*parser.Value{negInf, negInf}, "asc", true},
+		{"only infinities asc", []*parser.Value{negInf, posInf}, "asc", true},
+		{"only infinities desc", []*parser.Value{posInf, negInf}, "desc", true},
+		{"only infinities wrong asc", []*parser.Value{posInf, negInf}, "asc", false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := Check(tc.list, tc.order)
+			if got != tc.want {
+				t.Errorf("Check(..., %q) = %v, want %v", tc.order, got, tc.want)
+			}
+		})
+	}
+}

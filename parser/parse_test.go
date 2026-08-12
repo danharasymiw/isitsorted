@@ -151,6 +151,87 @@ func TestParseValue(t *testing.T) {
 	}
 }
 
+func TestParseInfinity(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantInf int8
+	}{
+		// Symbols
+		{"inf", "inf", 1},
+		{"infinity", "infinity", 1},
+		{"unicode ∞", "∞", 1},
+		{"neg inf", "-inf", -1},
+		{"neg infinity", "-infinity", -1},
+		{"neg unicode", "-∞", -1},
+		{"negative infinity word", "negative infinity", -1},
+		{"minus infinity word", "minus infinity", -1},
+		{"case insensitive", "Infinity", 1},
+		{"case insensitive INF", "INF", 1},
+
+		// German
+		{"german unendlich", "unendlich", 1},
+		{"german unendlichkeit", "unendlichkeit", 1},
+
+		// French
+		{"french infini", "infini", 1},
+
+		// Spanish/Portuguese/Italian
+		{"spanish infinito", "infinito", 1},
+
+		// Dutch
+		{"dutch oneindig", "oneindig", 1},
+
+		// Swedish
+		{"swedish oändlig", "oändlig", 1},
+
+		// Russian
+		{"russian бесконечность", "бесконечность", 1},
+
+		// Arabic
+		{"arabic لانهاية", "لانهاية", 1},
+
+		// Hindi
+		{"hindi अनंत", "अनंत", 1},
+
+		// Japanese/Chinese traditional
+		{"japanese 無限", "無限", 1},
+
+		// Chinese simplified
+		{"chinese 无限", "无限", 1},
+
+		// Korean
+		{"korean 무한", "무한", 1},
+
+		// Negative multilingual
+		{"negative german", "-unendlich", -1},
+		{"negative french", "minus infini", -1},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := ParseValue(tc.input)
+			if err != nil {
+				t.Fatalf("ParseValue(%q) error: %v", tc.input, err)
+			}
+			if got.Inf != tc.wantInf {
+				t.Errorf("ParseValue(%q).Inf = %d, want %d", tc.input, got.Inf, tc.wantInf)
+			}
+		})
+	}
+}
+
+func TestFormatInfinity(t *testing.T) {
+	pos := InfValue(1)
+	neg := InfValue(-1)
+	if got := FormatValue(pos); got != "∞" {
+		t.Errorf("FormatValue(+∞) = %q, want %q", got, "∞")
+	}
+	if got := FormatValue(neg); got != "-∞" {
+		t.Errorf("FormatValue(-∞) = %q, want %q", got, "-∞")
+	}
+}
+
 func TestConstantsAscending(t *testing.T) {
 	// ζ(3) ≈ 1.202, φ ≈ 1.618, e ≈ 2.718, π ≈ 3.142, τ ≈ 6.283
 	inputs := []string{"ζ(3)", "φ", "e", "π", "τ"}

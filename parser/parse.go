@@ -60,12 +60,21 @@ func normalizeEmoji(s string) string {
 type Value struct {
 	Min    *big.Rat
 	Max    *big.Rat
+	Inf    int8       // -1 = -∞, 0 = finite, +1 = +∞
 	Points []*big.Rat // non-nil for discrete sets (±, {1,3,7}); nil for continuous ranges/points
 }
 
 // PointValue wraps a single *big.Rat as an exact (zero-width) Value.
 func PointValue(r *big.Rat) *Value {
 	return &Value{Min: r, Max: r}
+}
+
+// InfValue returns a Value representing positive or negative infinity.
+func InfValue(sign int) *Value {
+	if sign >= 0 {
+		return &Value{Inf: 1}
+	}
+	return &Value{Inf: -1}
 }
 
 // DiscreteValue builds a Value from a set of discrete points, deduplicating
@@ -91,8 +100,11 @@ func DiscreteValue(pts []*big.Rat) *Value {
 	}
 }
 
-// IsPoint reports whether the value is an exact point (Min == Max).
+// IsPoint reports whether the value is an exact point (Min == Max), or an infinity.
 func (v *Value) IsPoint() bool {
+	if v.Inf != 0 {
+		return true
+	}
 	return v.Min.Cmp(v.Max) == 0
 }
 
@@ -101,11 +113,62 @@ func (v *Value) IsDiscrete() bool {
 	return v.Points != nil
 }
 
+var infinityWords = map[string]bool{
+	"infinity": true, "inf": true, "∞": true,
+	// German
+	"unendlich": true, "unendlichkeit": true,
+	// French
+	"infini": true, "infinité": true, "infinite": true,
+	// Spanish / Portuguese / Italian
+	"infinito": true,
+	// Dutch
+	"oneindig": true, "oneindigheid": true,
+	// Swedish
+	"oändlig": true, "oändlighet": true,
+	// Russian
+	"бесконечность": true,
+	// Arabic
+	"لانهاية": true,
+	// Hindi
+	"अनंत": true,
+	// Japanese / Chinese (traditional)
+	"無限": true,
+	// Chinese (simplified)
+	"无限": true,
+	// Korean
+	"무한": true,
+}
+
+func parseInfinity(s string) (*Value, bool) {
+	low := strings.ToLower(strings.TrimSpace(s))
+	sign := 1
+
+	if strings.HasPrefix(low, "-") {
+		sign = -1
+		low = strings.TrimSpace(low[1:])
+	} else if after, ok := strings.CutPrefix(low, "negative "); ok {
+		sign = -1
+		low = strings.TrimSpace(after)
+	} else if after, ok := strings.CutPrefix(low, "minus "); ok {
+		sign = -1
+		low = strings.TrimSpace(after)
+	}
+
+	if infinityWords[low] {
+		return InfValue(sign), true
+	}
+	return nil, false
+}
+
 func ParseValue(s string) (*Value, error) {
 	s = strings.TrimSpace(s)
 	s = normalizeEmoji(s)
 	if s == "" {
 		return nil, fmt.Errorf("empty value")
+	}
+
+	if v, ok := parseInfinity(s); ok {
+		return v, nil
 	}
 
 	r := new(big.Rat)
@@ -189,9 +252,16 @@ func FormatRat(r *big.Rat) string {
 	return s
 }
 
-// FormatValue renders a Value for display: a plain number for point values,
-// "center±delta" for symmetric ranges, or "[min..max]" for asymmetric ranges.
+// FormatValue renders a Value for display: "∞"/"-∞" for infinities, a plain
+// number for point values, "center±delta" for symmetric ranges, or
+// "[min..max]" for asymmetric ranges.
 func FormatValue(v *Value) string {
+	if v.Inf != 0 {
+		if v.Inf < 0 {
+			return "-∞"
+		}
+		return "∞"
+	}
 	if v.IsPoint() {
 		return FormatRat(v.Min)
 	}
